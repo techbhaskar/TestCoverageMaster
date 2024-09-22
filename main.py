@@ -35,54 +35,68 @@ if file_content:
     
     if st.sidebar.button("Analyze Project"):
         with st.spinner("Analyzing project..."):
-            # Process input
-            processed_files = process_upload(file_content)
-            
-            # Analyze code
-            code_analysis = analyze_code(processed_files, project_type)
-            
-            # Analyze existing tests
-            test_analysis = analyze_tests(processed_files, project_type)
-            
-            # Generate new tests
-            if use_ai and os.getenv("OPENAI_API_KEY"):
-                new_tests = generate_tests(code_analysis, test_analysis, project_type)
-            else:
-                new_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
-            
-            # Display results
-            st.header("Analysis Results")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("Code Coverage")
-                display_coverage(code_analysis['coverage'])
+            try:
+                # Process input
+                processed_files = process_upload(file_content)
+                st.write("Debug: Input files processed successfully.")
                 
-                st.subheader("Test Quality")
-                display_test_quality(test_analysis['quality'])
-            
-            with col2:
-                st.subheader("Functional Test Coverage")
-                display_functional_coverage(test_analysis['functional_coverage'])
-            
-            st.header("Generated Test Cases")
-            if project_type == 'Python':
-                language = 'python'
-            elif project_type in ['Angular', '.NET']:
-                language = 'csharp'
-            elif project_type == 'Java':
-                language = 'java'
-            else:
-                language = 'javascript'
-            st.code(new_tests, language=language)
-            
-            st.download_button(
-                label="Download Generated Tests",
-                data=new_tests,
-                file_name=f"generated_tests.{'py' if project_type == 'Python' else 'java' if project_type == 'Java' else 'cs' if project_type == '.NET' else 'spec.ts' if project_type == 'Angular' else 'test.js'}",
-                mime="text/plain"
-            )
+                # Analyze code
+                code_analysis = analyze_code(processed_files, project_type)
+                st.write("Debug: Code analysis completed.")
+                
+                # Analyze existing tests
+                test_analysis = analyze_tests(processed_files, project_type)
+                st.write("Debug: Test analysis completed.")
+                
+                # Generate new tests
+                st.write("Debug: Starting test generation.")
+                if use_ai and os.getenv("OPENAI_API_KEY"):
+                    new_tests = generate_tests(code_analysis, test_analysis, project_type)
+                    st.write("Debug: AI-powered test generation completed.")
+                else:
+                    new_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
+                    st.write("Debug: AI-powered test generation skipped.")
+                
+                st.write("Debug: Preparing to display results.")
+                
+                # Display results
+                st.header("Analysis Results")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("Code Coverage")
+                    display_coverage(code_analysis['coverage'])
+                    
+                    st.subheader("Test Quality")
+                    display_test_quality(test_analysis['quality'])
+                
+                with col2:
+                    st.subheader("Functional Test Coverage")
+                    display_functional_coverage(test_analysis['functional_coverage'])
+                
+                st.header("Generated Test Cases")
+                if project_type == 'Python':
+                    language = 'python'
+                elif project_type in ['Angular', '.NET']:
+                    language = 'csharp'
+                elif project_type == 'Java':
+                    language = 'java'
+                else:
+                    language = 'javascript'
+                st.code(new_tests, language=language)
+                
+                st.download_button(
+                    label="Download Generated Tests",
+                    data=new_tests,
+                    file_name=f"generated_tests.{'py' if project_type == 'Python' else 'java' if project_type == 'Java' else 'cs' if project_type == '.NET' else 'spec.ts' if project_type == 'Angular' else 'test.js'}",
+                    mime="text/plain"
+                )
+                
+                st.write("Debug: Analysis and result display completed successfully.")
+            except Exception as e:
+                st.error(f"An error occurred during the analysis: {str(e)}")
+                st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
 else:
     st.info("Please enter a file path or paste file content to begin analysis.")
 

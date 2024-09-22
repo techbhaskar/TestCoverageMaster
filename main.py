@@ -10,6 +10,20 @@ from utils import process_upload
 # Add version number
 __version__ = "1.1.0"
 
+def get_file_extension(project_type):
+    if project_type in ["JavaScript", "React"]:
+        return "js"
+    elif project_type == "Angular":
+        return "ts"
+    elif project_type == "Python":
+        return "py"
+    elif project_type == "Java":
+        return "java"
+    elif project_type == ".NET":
+        return "cs"
+    else:
+        return "txt"
+
 def add_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     return a + b
@@ -35,6 +49,36 @@ def get_test_quality_suggestions():
     ]
     return suggestions
 
+def display_results(code_analysis, test_analysis, project_type):
+    st.header("Analysis Results")
+    
+    if code_analysis and 'coverage' in code_analysis:
+        st.subheader("Code Coverage")
+        try:
+            display_coverage(code_analysis['coverage'])
+        except Exception as e:
+            st.error(f"Error displaying code coverage: {str(e)}")
+    else:
+        st.warning("Code coverage data is not available.")
+    
+    if test_analysis and 'quality' in test_analysis:
+        st.subheader("Test Quality")
+        try:
+            display_test_quality(test_analysis['quality'])
+        except Exception as e:
+            st.error(f"Error displaying test quality: {str(e)}")
+    else:
+        st.warning("Test quality data is not available.")
+    
+    if test_analysis and 'functional_coverage' in test_analysis:
+        st.subheader("Functional Coverage")
+        try:
+            display_functional_coverage(test_analysis['functional_coverage'])
+        except Exception as e:
+            st.error(f"Error displaying functional coverage: {str(e)}")
+    else:
+        st.warning("Functional coverage data is not available.")
+
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
@@ -50,6 +94,16 @@ def main():
     st.sidebar.header("Input Project Files")
     input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
 
+    # Default file content for testing
+    default_file_content = """
+def add(a, b):
+    return a + b
+
+def test_add():
+    assert add(2, 3) == 5
+    assert add(-1, 1) == 0
+    """
+
     file_content = None
 
     if input_type == "File Path":
@@ -63,49 +117,85 @@ def main():
             except IOError:
                 st.sidebar.error(f"Error reading file: {file_path}")
     else:
-        file_content = st.sidebar.text_area("Paste file content here")
+        file_content = st.sidebar.text_area("Paste file content here", value=default_file_content)
 
-    if file_content:
-        project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
-        use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
-        
-        if st.sidebar.button("Analyze Project"):
-            with st.spinner("Analyzing project..."):
-                try:
-                    # Process input
-                    processed_files = process_upload(file_content)
-                    
-                    # Analyze code
-                    code_analysis = analyze_code(processed_files, project_type)
-                    
-                    # Analyze existing tests
-                    test_analysis = analyze_tests(processed_files, project_type)
-                    
-                    # Generate new tests
-                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
-                    
-                    # Store generated tests in session state
-                    st.session_state.unit_tests = unit_tests
-                    st.session_state.functional_tests = functional_tests
-                    
-                    # Display results
-                    display_results(code_analysis, test_analysis, project_type)
-                    
-                    # Display generated tests
-                    st.header("Generated Test Cases")
+    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
+    use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
+    
+    analyze_button = st.sidebar.button("Analyze Project")
+
+    # Debug information
+    st.sidebar.write("Debug Info:")
+    st.sidebar.write(f"Input Type: {input_type}")
+    st.sidebar.write(f"File Content: {file_content[:50] if file_content else 'None'}...")
+    st.sidebar.write(f"Project Type: {project_type}")
+    st.sidebar.write(f"Analyze Button: {analyze_button}")
+
+    if file_content and (analyze_button or input_type == "File Content"):
+        with st.spinner("Analyzing project..."):
+            try:
+                # Process input
+                processed_files = process_upload(file_content)
+                st.write("Debug: Files processed successfully")
+                
+                # Analyze code
+                code_analysis = analyze_code(processed_files, project_type)
+                st.write("Debug: Code analysis completed")
+                
+                # Analyze existing tests
+                test_analysis = analyze_tests(processed_files, project_type)
+                st.write("Debug: Test analysis completed")
+                
+                # Generate new tests
+                unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+                st.write("Debug: Test generation completed")
+                
+                # Store generated tests in session state
+                st.session_state.unit_tests = unit_tests
+                st.session_state.functional_tests = functional_tests
+                
+                # Display results
+                display_results(code_analysis, test_analysis, project_type)
+                
+                # Display generated tests
+                st.header("Generated Test Cases")
+                if unit_tests:
                     st.subheader("Unit Tests")
                     st.code(unit_tests)
+                else:
+                    st.warning("No unit tests were generated.")
+                
+                if functional_tests:
                     st.subheader("Functional Tests")
                     st.code(functional_tests)
-                    
-                    # Display test quality suggestions
-                    st.header("Suggestions for Improving Test Quality")
-                    suggestions = get_test_quality_suggestions()
-                    for i, suggestion in enumerate(suggestions, 1):
-                        st.write(f"{i}. {suggestion}")
-                    
-                except Exception as e:
-                    st.error(f"An error occurred during the analysis: {str(e)}")
+                else:
+                    st.warning("No functional tests were generated.")
+                
+                # Add download buttons for unit tests and functional tests
+                if st.session_state.unit_tests:
+                    st.download_button(
+                        label="Download Unit Tests",
+                        data=st.session_state.unit_tests,
+                        file_name=f"generated_unit_tests.{get_file_extension(project_type)}",
+                        mime="text/plain"
+                    )
+                if st.session_state.functional_tests:
+                    st.download_button(
+                        label="Download Functional Tests",
+                        data=st.session_state.functional_tests,
+                        file_name=f"generated_functional_tests.{get_file_extension(project_type)}",
+                        mime="text/plain"
+                    )
+                
+                # Display test quality suggestions
+                st.header("Suggestions for Improving Test Quality")
+                suggestions = get_test_quality_suggestions()
+                for i, suggestion in enumerate(suggestions, 1):
+                    st.write(f"{i}. {suggestion}")
+                
+            except Exception as e:
+                st.error(f"An error occurred during the analysis: {str(e)}")
+                st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
     else:
         st.info("Please enter a file path or paste file content to begin analysis.")
 

@@ -22,6 +22,10 @@ def analyze_code(files: List[Dict], project_type: str) -> Dict:
             file_coverage = analyze_react(file['content'])
         elif project_type == "Python":
             file_coverage = analyze_python(file['content'])
+        elif project_type == "Java":
+            file_coverage = analyze_java(file['content'])
+        elif project_type == ".NET":
+            file_coverage = analyze_dotnet(file['content'])
         
         coverage['total_lines'] += file_coverage['total_lines']
         coverage['covered_lines'] += file_coverage['covered_lines']
@@ -92,6 +96,46 @@ def analyze_python(content: str) -> Dict:
     tree = ast.parse(content)
     functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
     uncovered_functions = [f for f in functions if f"test_{f}" not in content]
+    
+    return {
+        'total_lines': total_lines,
+        'covered_lines': covered_lines,
+        'uncovered_functions': uncovered_functions
+    }
+
+def analyze_java(content: str) -> Dict:
+    """
+    Analyze Java code for coverage.
+    """
+    lines = content.split('\n')
+    total_lines = len(lines)
+    covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startsWith("//"))
+    
+    # Find Java methods
+    methods = re.findall(r'(public|private|protected)?\s*\w+\s+(\w+)\s*\([^)]*\)\s*{', content)
+    methods = [m[1] for m in methods]  # Extract method names
+    
+    uncovered_functions = [m for m in methods if f"test{m.capitalize()}" not in content]
+    
+    return {
+        'total_lines': total_lines,
+        'covered_lines': covered_lines,
+        'uncovered_functions': uncovered_functions
+    }
+
+def analyze_dotnet(content: str) -> Dict:
+    """
+    Analyze .NET (C#) code for coverage.
+    """
+    lines = content.split('\n')
+    total_lines = len(lines)
+    covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startswith("//"))
+    
+    # Find C# methods
+    methods = re.findall(r'(public|private|protected)?\s*\w+\s+(\w+)\s*\([^)]*\)\s*{', content)
+    methods = [m[1] for m in methods]  # Extract method names
+    
+    uncovered_functions = [m for m in methods if f"Test{m}" not in content]
     
     return {
         'total_lines': total_lines,

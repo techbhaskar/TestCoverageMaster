@@ -19,6 +19,10 @@ def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) 
             test_case = generate_ai_test_case(func, project_type, 'JavaScript')
         elif project_type == 'Python':
             test_case = generate_ai_test_case(func, project_type, 'Python')
+        elif project_type == 'Java':
+            test_case = generate_ai_test_case(func, project_type, 'Java')
+        elif project_type == '.NET':
+            test_case = generate_ai_test_case(func, project_type, 'C#')
         else:
             test_case = generate_ai_test_case(func, project_type, 'JavaScript')
         generated_tests.append(test_case)
@@ -120,6 +124,87 @@ class Test{function_name.capitalize()}(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+"""
+    elif project_type == 'Java':
+        return f"""
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.InjectMocks;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class {function_name.capitalize()}Test {{
+
+    @Mock
+    private SomeDependency mockDependency;
+
+    @InjectMocks
+    private YourClass classUnderTest;
+
+    @BeforeEach
+    void setUp() {{
+        // TODO: Set up any necessary test fixtures
+    }}
+
+    @Test
+    void test{function_name.capitalize()}Basic() {{
+        // TODO: Implement basic functionality test
+        assertTrue(classUnderTest.{function_name}());
+    }}
+
+    @Test
+    void test{function_name.capitalize()}EdgeCases() {{
+        // TODO: Implement edge case tests
+    }}
+
+    @Test
+    void test{function_name.capitalize()}WithMock() {{
+        // TODO: Implement test with mock
+        when(mockDependency.someMethod()).thenReturn("mocked_value");
+        assertEquals("expected_result", classUnderTest.{function_name}());
+    }}
+}}
+"""
+    elif project_type == '.NET':
+        return f"""
+using NUnit.Framework;
+using Moq;
+
+[TestFixture]
+public class {function_name.capitalize()}Tests
+{{
+    private Mock<ISomeDependency> _mockDependency;
+    private YourClass _classUnderTest;
+
+    [SetUp]
+    public void Setup()
+    {{
+        _mockDependency = new Mock<ISomeDependency>();
+        _classUnderTest = new YourClass(_mockDependency.Object);
+    }}
+
+    [Test]
+    public void {function_name}_Basic()
+    {{
+        // TODO: Implement basic functionality test
+        Assert.IsTrue(_classUnderTest.{function_name}());
+    }}
+
+    [Test]
+    public void {function_name}_EdgeCases()
+    {{
+        // TODO: Implement edge case tests
+    }}
+
+    [Test]
+    public void {function_name}_WithMock()
+    {{
+        // TODO: Implement test with mock
+        _mockDependency.Setup(m => m.SomeMethod()).Returns("mocked_value");
+        Assert.AreEqual("expected_result", _classUnderTest.{function_name}());
+    }}
+}}
 """
     else:
         return f"""

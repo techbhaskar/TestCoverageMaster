@@ -14,10 +14,8 @@ def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) 
     functional_tests = []
     
     for func in uncovered_functions:
-        if project_type == 'Angular':
-            language = 'TypeScript'
-        elif project_type == 'React':
-            language = 'JavaScript'
+        if project_type in ['Angular', 'React', 'JavaScript']:
+            language = 'JavaScript' if project_type in ['JavaScript', 'React'] else 'TypeScript'
         elif project_type == 'Python':
             language = 'Python'
         elif project_type == 'Java':
@@ -39,8 +37,13 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str, 
     """
     Generate a test case for a given function using OpenAI's GPT-3.
     """
+    if project_type in ['Angular', 'React', 'JavaScript']:
+        framework = "Jest" if test_type == 'unit' else "Cypress"
+    else:
+        framework = project_type
+
     prompt = f"""
-    Generate a {test_type} test case for the following {project_type} function in {language}:
+    Generate a {test_type} test case using {framework} for the following {project_type} function in {language}:
 
     Function name: {function_name}
 
@@ -48,7 +51,7 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str, 
     1. Include multiple assertions
     2. Test edge cases
     3. Use mocks or spies if appropriate
-    4. Follow best practices for {project_type} testing
+    4. Follow best practices for {framework} testing
     5. {"Focus on testing the function's behavior and output" if test_type == 'unit' else "Focus on testing the function's integration with other components and user interactions"}
 
     Please provide only the code for the test case, without any explanations.
@@ -65,7 +68,7 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str, 
         )
 
         generated_test = response.choices[0].text.strip()
-        return f"// {test_type.capitalize()} Test for {function_name}\n{generated_test}"
+        return f"// {test_type.capitalize()} Test for {function_name} using {framework}\n{generated_test}"
     except Exception as e:
         print(f"Error generating AI test case: {str(e)}")
         return generate_fallback_test_case(function_name, project_type, test_type)
@@ -74,35 +77,48 @@ def generate_fallback_test_case(function_name: str, project_type: str, test_type
     """
     Generate a basic test case when AI generation fails.
     """
-    if project_type == 'Angular':
-        return f"""
-// {test_type.capitalize()} Test for {function_name}
-describe('{function_name} - {test_type.capitalize()} Test', () => {{
-  let component: YourComponentName;
-  let fixture: ComponentFixture<YourComponentName>;
-
-  beforeEach(async () => {{
-    await TestBed.configureTestingModule({{
-      declarations: [ YourComponentName ]
-    }})
-    .compileComponents();
+    if project_type in ['Angular', 'React', 'JavaScript']:
+        if test_type == 'unit':
+            return f"""
+// Unit Test for {function_name} using Jest
+describe('{function_name}', () => {{
+  test('should be defined', () => {{
+    expect({function_name}).toBeDefined();
   }});
 
-  beforeEach(() => {{
-    fixture = TestBed.createComponent(YourComponentName);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  test('should handle basic functionality', () => {{
+    // TODO: Implement basic functionality test
   }});
 
-  it('should be defined', () => {{
-    expect(component.{function_name}).toBeDefined();
-  }});
-
-  it('should handle edge cases', () => {{
+  test('should handle edge cases', () => {{
     // TODO: Implement edge case tests
   }});
 
-  {{"it('should work with mocks', () => {{\n    // TODO: Implement tests with mocks\n  }});" if test_type == 'unit' else "it('should integrate with other components', () => {{\n    // TODO: Implement integration tests\n  }});"}}
+  test('should work with mocks', () => {{
+    // TODO: Implement tests with mocks
+  }});
+}});
+"""
+        else:
+            return f"""
+// Functional Test for {function_name} using Cypress
+describe('{function_name} - Functional Test', () => {{
+  beforeEach(() => {{
+    // TODO: Set up any necessary test fixtures or visit the appropriate page
+    // cy.visit('/your-page');
+  }});
+
+  it('should perform expected actions', () => {{
+    // TODO: Implement functional test steps
+  }});
+
+  it('should handle user interactions', () => {{
+    // TODO: Implement user interaction tests
+  }});
+
+  it('should integrate with other components', () => {{
+    // TODO: Implement integration tests
+  }});
 }});
 """
     elif project_type == 'Python':

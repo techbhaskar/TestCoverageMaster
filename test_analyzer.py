@@ -1,11 +1,12 @@
 from typing import List, Dict
 import re
+import ast
 
 def analyze_tests(files: List[Dict], project_type: str) -> Dict:
     """
     Analyze the test files and return test quality and functional coverage information.
     """
-    test_files = [f for f in files if f['name'].endswith('.test.js') or f['name'].endswith('.spec.ts')]
+    test_files = [f for f in files if f['name'].endswith('.test.js') or f['name'].endswith('.spec.ts') or f['name'].endswith('_test.py')]
     
     quality = analyze_test_quality(test_files, project_type)
     functional_coverage = analyze_functional_coverage(files, test_files, project_type)
@@ -33,6 +34,11 @@ def analyze_test_quality(test_files: List[Dict], project_type: str) -> Dict:
             quality['assertions'] += content.count('expect(')
             quality['mocks'] += content.count('jasmine.createSpy') + content.count('jasmine.createSpyObj')
             quality['test_depth'] += content.count('describe(')
+        elif project_type == 'Python':
+            quality['total_tests'] += content.count('def test_')
+            quality['assertions'] += content.count('assert')
+            quality['mocks'] += content.count('mock.patch')
+            quality['test_depth'] += content.count('class Test')
         else:
             quality['total_tests'] += content.count('test(')
             quality['assertions'] += content.count('expect(')
@@ -61,6 +67,8 @@ def analyze_functional_coverage(files: List[Dict], test_files: List[Dict], proje
             file_functions = extract_angular_functions(file['content'])
         elif project_type == "React":
             file_functions = extract_react_functions(file['content'])
+        elif project_type == "Python":
+            file_functions = extract_python_functions(file['content'])
         
         all_functions.update(file_functions)
     
@@ -100,11 +108,20 @@ def extract_react_functions(content: str) -> List[str]:
     # This should be implemented with a JSX parser
     return extract_js_functions(content)  # Placeholder implementation
 
+def extract_python_functions(content: str) -> List[str]:
+    """
+    Extract function names from Python code.
+    """
+    tree = ast.parse(content)
+    return [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+
 def extract_tested_functions(content: str, project_type: str) -> List[str]:
     """
     Extract names of functions being tested.
     """
     if project_type == 'Angular':
         return re.findall(r'it\([\'"](.+?)[\'"]', content)
+    elif project_type == 'Python':
+        return re.findall(r'def\s+test_(\w+)', content)
     else:
         return re.findall(r'test\([\'"](.+?)[\'"]', content)

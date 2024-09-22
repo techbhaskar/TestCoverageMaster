@@ -17,6 +17,8 @@ def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) 
             test_case = generate_ai_test_case(func, project_type, 'TypeScript')
         elif project_type == 'React':
             test_case = generate_ai_test_case(func, project_type, 'JavaScript')
+        elif project_type == 'Python':
+            test_case = generate_ai_test_case(func, project_type, 'Python')
         else:
             test_case = generate_ai_test_case(func, project_type, 'JavaScript')
         generated_tests.append(test_case)
@@ -91,6 +93,33 @@ describe('{function_name}', () => {{
     // TODO: Implement tests with mocks
   }});
 }});
+"""
+    elif project_type == 'Python':
+        return f"""
+import unittest
+from unittest.mock import patch
+
+class Test{function_name.capitalize()}(unittest.TestCase):
+    def setUp(self):
+        # TODO: Set up any necessary test fixtures
+        pass
+
+    def test_{function_name}_basic(self):
+        # TODO: Implement basic functionality test
+        self.assertTrue({function_name}())
+
+    def test_{function_name}_edge_cases(self):
+        # TODO: Implement edge case tests
+        pass
+
+    @patch('module.some_dependency')
+    def test_{function_name}_with_mock(self, mock_dependency):
+        # TODO: Implement test with mock
+        mock_dependency.return_value = 'mocked_value'
+        self.assertEqual({function_name}(), 'expected_result')
+
+if __name__ == '__main__':
+    unittest.main()
 """
     else:
         return f"""

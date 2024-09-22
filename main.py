@@ -30,7 +30,7 @@ else:
     file_content = st.sidebar.text_area("Paste file content here")
 
 if file_content:
-    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React"])
+    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python"])
     use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
     
     if st.sidebar.button("Analyze Project"):
@@ -67,16 +67,16 @@ if file_content:
                 display_functional_coverage(test_analysis['functional_coverage'])
             
             st.header("Generated Test Cases")
-            st.code(new_tests, language='typescript' if project_type == 'Angular' else 'javascript')
+            st.code(new_tests, language='python' if project_type == 'Python' else 'typescript' if project_type == 'Angular' else 'javascript')
             
             st.download_button(
                 label="Download Generated Tests",
                 data=new_tests,
-                file_name=f"generated_tests.{'spec.ts' if project_type == 'Angular' else 'test.js'}",
+                file_name=f"generated_tests.{'py' if project_type == 'Python' else 'spec.ts' if project_type == 'Angular' else 'test.js'}",
                 mime="text/plain"
             )
 else:
     st.info("Please enter a file path or paste file content to begin analysis.")
 
 st.sidebar.markdown("---")
-st.sidebar.info("This app analyzes JavaScript, Angular, and React projects for unit test coverage and quality, and generates new test cases.")
+st.sidebar.info("This app analyzes JavaScript, Angular, React, and Python projects for unit test coverage and quality, and generates new test cases.")

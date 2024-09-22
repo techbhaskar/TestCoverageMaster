@@ -34,7 +34,6 @@ def analyze_javascript(content: str) -> Dict:
     """
     Analyze JavaScript code for coverage.
     """
-    # This is a simplified analysis and should be replaced with a proper JS parser
     lines = content.split('\n')
     total_lines = len(lines)
     covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startswith('//'))
@@ -52,8 +51,26 @@ def analyze_angular(content: str) -> Dict:
     """
     Analyze Angular code for coverage.
     """
-    # This should be implemented with a TypeScript parser
-    return analyze_javascript(content)  # Placeholder implementation
+    lines = content.split('\n')
+    total_lines = len(lines)
+    covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startswith('//'))
+    
+    # Find TypeScript/Angular functions and methods
+    functions = re.findall(r'(public|private)?\s*(\w+)\s*\([^)]*\)\s*{', content)
+    functions = [f[1] for f in functions]  # Extract function names
+    
+    # Find component properties
+    properties = re.findall(r'(\w+)\s*:\s*(\w+)\s*;', content)
+    properties = [p[0] for p in properties]  # Extract property names
+    
+    all_functions = functions + properties
+    uncovered_functions = [f for f in all_functions if f"test_{f}" not in content]
+    
+    return {
+        'total_lines': total_lines,
+        'covered_lines': covered_lines,
+        'uncovered_functions': uncovered_functions
+    }
 
 def analyze_react(content: str) -> Dict:
     """

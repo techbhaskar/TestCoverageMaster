@@ -1,0 +1,23 @@
+<h2>Edit Task</h2>
+<div *ngIf="task">
+  <form (ngSubmit)="updateTask()">
+    <div>
+      <label for="title">Title:</label>
+      <input type="text" id="title" [(ngModel)]="task.title" name="title" required>
+    </div>
+    <div>
+      <label for="description">Description:</label>
+      <textarea id="description" [(ngModel)]="task.description" name="description" required></textarea>
+    </div>
+    <div>
+      <label for="status">Status:</label>
+      <select id="status" [(ngModel)]="task.status" name="status">
+        <option value="todo">To Do</option>
+        <option value="in-progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <button type="submit">Update Task</button>
+  </form>
+</div>
+<a routerLink="/">Back to Task List</a>

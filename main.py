@@ -28,7 +28,7 @@ if uploaded_files:
             test_analysis = analyze_tests(processed_files, project_type)
             
             # Generate new tests
-            new_tests = generate_tests(code_analysis, test_analysis)
+            new_tests = generate_tests(code_analysis, test_analysis, project_type)
             
             # Display results
             st.header("Analysis Results")
@@ -47,13 +47,13 @@ if uploaded_files:
                 display_functional_coverage(test_analysis['functional_coverage'])
             
             st.header("Generated Test Cases")
-            st.code(new_tests, language='javascript')
+            st.code(new_tests, language='typescript' if project_type == 'Angular' else 'javascript')
             
             st.download_button(
                 label="Download Generated Tests",
                 data=new_tests,
-                file_name="generated_tests.js",
-                mime="text/javascript"
+                file_name=f"generated_tests.{'spec.ts' if project_type == 'Angular' else 'test.js'}",
+                mime="text/plain"
             )
 else:
     st.info("Please upload your project files to begin analysis.")

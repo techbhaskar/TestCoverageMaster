@@ -10,16 +10,31 @@ st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
 st.title("Comprehensive Unit Test Analyzer")
 
-st.sidebar.header("Upload Project Files")
-uploaded_files = st.sidebar.file_uploader("Choose project files", accept_multiple_files=True, type=['js', 'jsx', 'ts', 'tsx'])
+st.sidebar.header("Input Project Files")
+input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
 
-if uploaded_files:
+file_content = None
+
+if input_type == "File Path":
+    file_path = st.sidebar.text_input("Enter file path")
+    if file_path:
+        try:
+            with open(file_path, 'r') as file:
+                file_content = file.read()
+        except FileNotFoundError:
+            st.sidebar.error(f"File not found: {file_path}")
+        except IOError:
+            st.sidebar.error(f"Error reading file: {file_path}")
+else:
+    file_content = st.sidebar.text_area("Paste file content here")
+
+if file_content:
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React"])
     
     if st.sidebar.button("Analyze Project"):
         with st.spinner("Analyzing project..."):
-            # Process uploaded files
-            processed_files = process_upload(uploaded_files)
+            # Process input
+            processed_files = process_upload(file_content)
             
             # Analyze code
             code_analysis = analyze_code(processed_files, project_type)
@@ -56,7 +71,7 @@ if uploaded_files:
                 mime="text/plain"
             )
 else:
-    st.info("Please upload your project files to begin analysis.")
+    st.info("Please enter a file path or paste file content to begin analysis.")
 
 st.sidebar.markdown("---")
 st.sidebar.info("This app analyzes JavaScript, Angular, and React projects for unit test coverage and quality, and generates new test cases.")

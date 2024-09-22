@@ -109,7 +109,7 @@ def analyze_java(content: str) -> Dict:
     """
     lines = content.split('\n')
     total_lines = len(lines)
-    covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startsWith("//"))
+    covered_lines = sum(1 for line in lines if line.strip() and not line.strip().startswith("//"))
     
     # Find Java methods
     methods = re.findall(r'(public|private|protected)?\s*\w+\s+(\w+)\s*\([^)]*\)\s*{', content)

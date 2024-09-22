@@ -9,6 +9,12 @@ from utils import process_upload
 
 st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
+# Initialize session state for storing generated tests
+if 'unit_tests' not in st.session_state:
+    st.session_state.unit_tests = None
+if 'functional_tests' not in st.session_state:
+    st.session_state.functional_tests = None
+
 st.title("Comprehensive Unit Test Analyzer")
 
 st.sidebar.header("Input Project Files")
@@ -28,6 +34,15 @@ if input_type == "File Path":
             st.sidebar.error(f"Error reading file: {file_path}")
 else:
     file_content = st.sidebar.text_area("Paste file content here")
+
+def generate_and_store_tests(code_analysis, test_analysis, project_type, use_ai):
+    if use_ai and os.getenv("OPENAI_API_KEY"):
+        st.session_state.unit_tests, st.session_state.functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+        st.write("Debug: AI-powered test generation completed.")
+    else:
+        st.session_state.unit_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
+        st.session_state.functional_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
+        st.write("Debug: AI-powered test generation skipped.")
 
 if file_content:
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
@@ -50,13 +65,7 @@ if file_content:
                 
                 # Generate new tests
                 st.write("Debug: Starting test generation.")
-                if use_ai and os.getenv("OPENAI_API_KEY"):
-                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
-                    st.write("Debug: AI-powered test generation completed.")
-                else:
-                    unit_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
-                    functional_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
-                    st.write("Debug: AI-powered test generation skipped.")
+                generate_and_store_tests(code_analysis, test_analysis, project_type, use_ai)
                 
                 st.write("Debug: Preparing to display results.")
                 
@@ -99,27 +108,29 @@ if file_content:
                     file_extension = '.test.js'
                 
                 st.subheader("Unit Tests")
-                st.code(unit_tests, language=language)
+                st.code(st.session_state.unit_tests, language=language)
                 
                 st.subheader("Functional Tests")
-                st.code(functional_tests, language=language)
+                st.code(st.session_state.functional_tests, language=language)
                 
                 # Download buttons for generated tests
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.download_button(
-                        label="Download Unit Tests",
-                        data=unit_tests,
-                        file_name=f"generated_unit_tests{file_extension}",
-                        mime="text/plain"
-                    )
+                    if st.session_state.unit_tests:
+                        st.download_button(
+                            label="Download Unit Tests",
+                            data=st.session_state.unit_tests,
+                            file_name=f"generated_unit_tests{file_extension}",
+                            mime="text/plain"
+                        )
                 with col2:
-                    st.download_button(
-                        label="Download Functional Tests",
-                        data=functional_tests,
-                        file_name=f"generated_functional_tests{file_extension}",
-                        mime="text/plain"
-                    )
+                    if st.session_state.functional_tests:
+                        st.download_button(
+                            label="Download Functional Tests",
+                            data=st.session_state.functional_tests,
+                            file_name=f"generated_functional_tests{file_extension}",
+                            mime="text/plain"
+                        )
                 
                 st.write("Debug: Analysis and result display completed successfully.")
             except Exception as e:

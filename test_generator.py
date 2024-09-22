@@ -1,8 +1,12 @@
-from typing import Dict
+import os
+from typing import Dict, List
+import openai
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> str:
     """
-    Generate test cases for uncovered functions.
+    Generate test cases for uncovered functions using AI.
     """
     uncovered_functions = code_analysis['coverage']['uncovered_functions']
     
@@ -10,36 +14,54 @@ def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) 
     
     for func in uncovered_functions:
         if project_type == 'Angular':
-            test_case = generate_angular_test_case(func)
+            test_case = generate_ai_test_case(func, project_type, 'TypeScript')
+        elif project_type == 'React':
+            test_case = generate_ai_test_case(func, project_type, 'JavaScript')
         else:
-            test_case = generate_js_test_case(func)
+            test_case = generate_ai_test_case(func, project_type, 'JavaScript')
         generated_tests.append(test_case)
     
     return '\n\n'.join(generated_tests)
 
-def generate_js_test_case(function_name: str) -> str:
+def generate_ai_test_case(function_name: str, project_type: str, language: str) -> str:
     """
-    Generate a basic test case for a given JavaScript function.
+    Generate a test case for a given function using OpenAI's GPT-3.
     """
-    return f"""
-describe('{function_name}', () => {{
-  test('should be defined', () => {{
-    expect({function_name}).toBeDefined();
-  }});
+    prompt = f"""
+    Generate a complex test case for the following {project_type} function in {language}:
 
-  test('should return expected result', () => {{
-    // TODO: Replace with actual test implementation
-    const result = {function_name}();
-    expect(result).toBe(/* expected result */);
-  }});
-}});
-"""
+    Function name: {function_name}
 
-def generate_angular_test_case(function_name: str) -> str:
+    The test case should:
+    1. Include multiple assertions
+    2. Test edge cases
+    3. Use mocks or spies if appropriate
+    4. Follow best practices for {project_type} testing
+
+    Please provide only the code for the test case, without any explanations.
     """
-    Generate a basic test case for a given Angular function or property.
+
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            max_tokens=500,
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
+
+        return response.choices[0].text.strip()
+    except Exception as e:
+        print(f"Error generating AI test case: {str(e)}")
+        return generate_fallback_test_case(function_name, project_type)
+
+def generate_fallback_test_case(function_name: str, project_type: str) -> str:
     """
-    return f"""
+    Generate a basic test case when AI generation fails.
+    """
+    if project_type == 'Angular':
+        return f"""
 describe('{function_name}', () => {{
   let component: YourComponentName;
   let fixture: ComponentFixture<YourComponentName>;
@@ -61,10 +83,28 @@ describe('{function_name}', () => {{
     expect(component.{function_name}).toBeDefined();
   }});
 
-  it('should return expected result', () => {{
-    // TODO: Replace with actual test implementation
-    const result = component.{function_name}();
-    expect(result).toBe(/* expected result */);
+  it('should handle edge cases', () => {{
+    // TODO: Implement edge case tests
+  }});
+
+  it('should work with mocks', () => {{
+    // TODO: Implement tests with mocks
+  }});
+}});
+"""
+    else:
+        return f"""
+describe('{function_name}', () => {{
+  test('should be defined', () => {{
+    expect({function_name}).toBeDefined();
+  }});
+
+  test('should handle edge cases', () => {{
+    // TODO: Implement edge case tests
+  }});
+
+  test('should work with mocks', () => {{
+    // TODO: Implement tests with mocks
   }});
 }});
 """

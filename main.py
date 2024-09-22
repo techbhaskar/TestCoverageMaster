@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 from code_analyzer import analyze_code
 from test_analyzer import analyze_tests
 from test_generator import generate_tests
@@ -30,6 +31,7 @@ else:
 
 if file_content:
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React"])
+    use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
     
     if st.sidebar.button("Analyze Project"):
         with st.spinner("Analyzing project..."):
@@ -43,7 +45,10 @@ if file_content:
             test_analysis = analyze_tests(processed_files, project_type)
             
             # Generate new tests
-            new_tests = generate_tests(code_analysis, test_analysis, project_type)
+            if use_ai and os.getenv("OPENAI_API_KEY"):
+                new_tests = generate_tests(code_analysis, test_analysis, project_type)
+            else:
+                new_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
             
             # Display results
             st.header("Analysis Results")

@@ -1,40 +1,46 @@
 import os
-from typing import Dict, List
+from typing import Dict, Tuple
 import openai
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> str:
+def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> Tuple[str, str]:
     """
-    Generate test cases for uncovered functions using AI.
+    Generate both unit and functional test cases for uncovered functions using AI.
     """
     uncovered_functions = code_analysis['coverage']['uncovered_functions']
     
-    generated_tests = []
+    unit_tests = []
+    functional_tests = []
     
     for func in uncovered_functions:
         if project_type == 'Angular':
-            test_case = generate_ai_test_case(func, project_type, 'TypeScript')
+            language = 'TypeScript'
         elif project_type == 'React':
-            test_case = generate_ai_test_case(func, project_type, 'JavaScript')
+            language = 'JavaScript'
         elif project_type == 'Python':
-            test_case = generate_ai_test_case(func, project_type, 'Python')
+            language = 'Python'
         elif project_type == 'Java':
-            test_case = generate_ai_test_case(func, project_type, 'Java')
+            language = 'Java'
         elif project_type == '.NET':
-            test_case = generate_ai_test_case(func, project_type, 'C#')
+            language = 'C#'
         else:
-            test_case = generate_ai_test_case(func, project_type, 'JavaScript')
-        generated_tests.append(test_case)
+            language = 'JavaScript'
+        
+        unit_test = generate_ai_test_case(func, project_type, language, 'unit')
+        functional_test = generate_ai_test_case(func, project_type, language, 'functional')
+        
+        unit_tests.append(unit_test)
+        functional_tests.append(functional_test)
     
-    return '\n\n'.join(generated_tests)
+    return "\n\n".join(unit_tests), "\n\n".join(functional_tests)
 
-def generate_ai_test_case(function_name: str, project_type: str, language: str) -> str:
+def generate_ai_test_case(function_name: str, project_type: str, language: str, test_type: str) -> str:
     """
     Generate a test case for a given function using OpenAI's GPT-3.
     """
     prompt = f"""
-    Generate a complex test case for the following {project_type} function in {language}:
+    Generate a {test_type} test case for the following {project_type} function in {language}:
 
     Function name: {function_name}
 
@@ -43,6 +49,7 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str) 
     2. Test edge cases
     3. Use mocks or spies if appropriate
     4. Follow best practices for {project_type} testing
+    5. {"Focus on testing the function's behavior and output" if test_type == 'unit' else "Focus on testing the function's integration with other components and user interactions"}
 
     Please provide only the code for the test case, without any explanations.
     """
@@ -57,18 +64,20 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str) 
             temperature=0.7,
         )
 
-        return response.choices[0].text.strip()
+        generated_test = response.choices[0].text.strip()
+        return f"// {test_type.capitalize()} Test for {function_name}\n{generated_test}"
     except Exception as e:
         print(f"Error generating AI test case: {str(e)}")
-        return generate_fallback_test_case(function_name, project_type)
+        return generate_fallback_test_case(function_name, project_type, test_type)
 
-def generate_fallback_test_case(function_name: str, project_type: str) -> str:
+def generate_fallback_test_case(function_name: str, project_type: str, test_type: str) -> str:
     """
     Generate a basic test case when AI generation fails.
     """
     if project_type == 'Angular':
         return f"""
-describe('{function_name}', () => {{
+// {test_type.capitalize()} Test for {function_name}
+describe('{function_name} - {test_type.capitalize()} Test', () => {{
   let component: YourComponentName;
   let fixture: ComponentFixture<YourComponentName>;
 
@@ -93,17 +102,16 @@ describe('{function_name}', () => {{
     // TODO: Implement edge case tests
   }});
 
-  it('should work with mocks', () => {{
-    // TODO: Implement tests with mocks
-  }});
+  {{"it('should work with mocks', () => {{\n    // TODO: Implement tests with mocks\n  }});" if test_type == 'unit' else "it('should integrate with other components', () => {{\n    // TODO: Implement integration tests\n  }});"}}
 }});
 """
     elif project_type == 'Python':
         return f"""
+# {test_type.capitalize()} Test for {function_name}
 import unittest
 from unittest.mock import patch
 
-class Test{function_name.capitalize()}(unittest.TestCase):
+class Test{function_name.capitalize()}_{test_type.capitalize()}(unittest.TestCase):
     def setUp(self):
         # TODO: Set up any necessary test fixtures
         pass
@@ -116,17 +124,14 @@ class Test{function_name.capitalize()}(unittest.TestCase):
         # TODO: Implement edge case tests
         pass
 
-    @patch('module.some_dependency')
-    def test_{function_name}_with_mock(self, mock_dependency):
-        # TODO: Implement test with mock
-        mock_dependency.return_value = 'mocked_value'
-        self.assertEqual({function_name}(), 'expected_result')
+    {{"@patch('module.some_dependency')\n    def test_{function_name}_with_mock(self, mock_dependency):\n        # TODO: Implement test with mock\n        mock_dependency.return_value = 'mocked_value'\n        self.assertEqual({function_name}(), 'expected_result')" if test_type == 'unit' else f"def test_{function_name}_integration(self):\n        # TODO: Implement integration test\n        pass"}}
 
 if __name__ == '__main__':
     unittest.main()
 """
     elif project_type == 'Java':
         return f"""
+// {test_type.capitalize()} Test for {function_name}
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.InjectMocks;
@@ -134,7 +139,7 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class {function_name.capitalize()}Test {{
+class {function_name.capitalize()}_{test_type.capitalize()}Test {{
 
     @Mock
     private SomeDependency mockDependency;
@@ -158,21 +163,17 @@ class {function_name.capitalize()}Test {{
         // TODO: Implement edge case tests
     }}
 
-    @Test
-    void test{function_name.capitalize()}WithMock() {{
-        // TODO: Implement test with mock
-        when(mockDependency.someMethod()).thenReturn("mocked_value");
-        assertEquals("expected_result", classUnderTest.{function_name}());
-    }}
+    {{"@Test\n    void test{function_name.capitalize()}WithMock() {{\n        // TODO: Implement test with mock\n        when(mockDependency.someMethod()).thenReturn(\"mocked_value\");\n        assertEquals(\"expected_result\", classUnderTest.{function_name}());\n    }}" if test_type == 'unit' else f"@Test\n    void test{function_name.capitalize()}Integration() {{\n        // TODO: Implement integration test\n    }}"}}
 }}
 """
     elif project_type == '.NET':
         return f"""
+// {test_type.capitalize()} Test for {function_name}
 using NUnit.Framework;
 using Moq;
 
 [TestFixture]
-public class {function_name.capitalize()}Tests
+public class {function_name.capitalize()}_{test_type.capitalize()}Tests
 {{
     private Mock<ISomeDependency> _mockDependency;
     private YourClass _classUnderTest;
@@ -197,18 +198,13 @@ public class {function_name.capitalize()}Tests
         // TODO: Implement edge case tests
     }}
 
-    [Test]
-    public void {function_name}_WithMock()
-    {{
-        // TODO: Implement test with mock
-        _mockDependency.Setup(m => m.SomeMethod()).Returns("mocked_value");
-        Assert.AreEqual("expected_result", _classUnderTest.{function_name}());
-    }}
+    {{"[Test]\n    public void {function_name}_WithMock()\n    {{\n        // TODO: Implement test with mock\n        _mockDependency.Setup(m => m.SomeMethod()).Returns(\"mocked_value\");\n        Assert.AreEqual(\"expected_result\", _classUnderTest.{function_name}());\n    }}" if test_type == 'unit' else f"[Test]\n    public void {function_name}_Integration()\n    {{\n        // TODO: Implement integration test\n    }}"}}
 }}
 """
     else:
         return f"""
-describe('{function_name}', () => {{
+// {test_type.capitalize()} Test for {function_name}
+describe('{function_name} - {test_type.capitalize()} Test', () => {{
   test('should be defined', () => {{
     expect({function_name}).toBeDefined();
   }});
@@ -217,8 +213,6 @@ describe('{function_name}', () => {{
     // TODO: Implement edge case tests
   }});
 
-  test('should work with mocks', () => {{
-    // TODO: Implement tests with mocks
-  }});
+  {{"test('should work with mocks', () => {{\n    // TODO: Implement tests with mocks\n  }});" if test_type == 'unit' else "test('should integrate with other components', () => {{\n    // TODO: Implement integration tests\n  }});"}}
 }});
 """

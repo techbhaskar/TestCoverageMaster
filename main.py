@@ -51,10 +51,11 @@ if file_content:
                 # Generate new tests
                 st.write("Debug: Starting test generation.")
                 if use_ai and os.getenv("OPENAI_API_KEY"):
-                    new_tests = generate_tests(code_analysis, test_analysis, project_type)
+                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
                     st.write("Debug: AI-powered test generation completed.")
                 else:
-                    new_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
+                    unit_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
+                    functional_tests = "AI-powered test generation is disabled or OpenAI API key is missing."
                     st.write("Debug: AI-powered test generation skipped.")
                 
                 st.write("Debug: Preparing to display results.")
@@ -75,23 +76,50 @@ if file_content:
                     st.subheader("Functional Test Coverage")
                     display_functional_coverage(test_analysis['functional_coverage'])
                 
+                # Display generated test cases
                 st.header("Generated Test Cases")
+                
                 if project_type == 'Python':
                     language = 'python'
-                elif project_type in ['Angular', '.NET']:
+                    file_extension = '_test.py'
+                elif project_type == 'Angular':
+                    language = 'typescript'
+                    file_extension = '.spec.ts'
+                elif project_type == '.NET':
                     language = 'csharp'
+                    file_extension = 'Tests.cs'
                 elif project_type == 'Java':
                     language = 'java'
+                    file_extension = 'Test.java'
+                elif project_type == 'React':
+                    language = 'javascript'
+                    file_extension = '.test.js'
                 else:
                     language = 'javascript'
-                st.code(new_tests, language=language)
+                    file_extension = '.test.js'
                 
-                st.download_button(
-                    label="Download Generated Tests",
-                    data=new_tests,
-                    file_name=f"generated_tests.{'py' if project_type == 'Python' else 'java' if project_type == 'Java' else 'cs' if project_type == '.NET' else 'spec.ts' if project_type == 'Angular' else 'test.js'}",
-                    mime="text/plain"
-                )
+                st.subheader("Unit Tests")
+                st.code(unit_tests, language=language)
+                
+                st.subheader("Functional Tests")
+                st.code(functional_tests, language=language)
+                
+                # Download buttons for generated tests
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        label="Download Unit Tests",
+                        data=unit_tests,
+                        file_name=f"generated_unit_tests{file_extension}",
+                        mime="text/plain"
+                    )
+                with col2:
+                    st.download_button(
+                        label="Download Functional Tests",
+                        data=functional_tests,
+                        file_name=f"generated_functional_tests{file_extension}",
+                        mime="text/plain"
+                    )
                 
                 st.write("Debug: Analysis and result display completed successfully.")
             except Exception as e:

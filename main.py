@@ -103,29 +103,51 @@ def main():
         st.session_state.functional_tests = None
     if 'user' not in st.session_state:
         st.session_state.user = None
+    if 'show_login' not in st.session_state:
+        st.session_state.show_login = False
 
     st.title("Comprehensive Unit Test Analyzer")
     st.caption(f"Version: {__version__}")
 
-    # Display login buttons if user is not logged in
-    if not st.session_state.user:
-        st.sidebar.header("Login")
-        google_button = login_button("Google", google_oauth)
-        facebook_button = login_button("Facebook", facebook_oauth)
-        github_button = login_button("GitHub", github_oauth)
+    # Header with login button or user info
+    header = st.container()
+    with header:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.write("Welcome to the Unit Test Analyzer")
+        with col2:
+            if st.session_state.user:
+                st.write(f"Logged in as: {st.session_state.user['name']}")
+                if st.button("Logout"):
+                    st.session_state.user = None
+            else:
+                if st.button("Login"):
+                    st.session_state.show_login = True
 
-        if google_button.authorize_button("Login with Google"):
-            st.session_state.user = google_button.get_user_info()
-        elif facebook_button.authorize_button("Login with Facebook"):
-            st.session_state.user = facebook_button.get_user_info()
-        elif github_button.authorize_button("Login with GitHub"):
-            st.session_state.user = github_button.get_user_info()
+    # Login popup
+    if st.session_state.show_login and not st.session_state.user:
+        login_container = st.empty()
+        with login_container.container():
+            st.subheader("Login Options")
+            google_button = login_button("Google", google_oauth)
+            facebook_button = login_button("Facebook", facebook_oauth)
+            github_button = login_button("GitHub", github_oauth)
 
-    # If user is logged in, show the main application
+            if google_button.authorize_button("Login with Google"):
+                st.session_state.user = google_button.get_user_info()
+                st.session_state.show_login = False
+                login_container.empty()
+            elif facebook_button.authorize_button("Login with Facebook"):
+                st.session_state.user = facebook_button.get_user_info()
+                st.session_state.show_login = False
+                login_container.empty()
+            elif github_button.authorize_button("Login with GitHub"):
+                st.session_state.user = github_button.get_user_info()
+                st.session_state.show_login = False
+                login_container.empty()
+
+    # Main application content
     if st.session_state.user:
-        st.sidebar.success(f"Logged in as {st.session_state.user['name']}")
-        st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"user": None}))
-
         st.sidebar.header("Input Project Files")
         input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
 

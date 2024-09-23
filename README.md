@@ -1,6 +1,6 @@
 # Comprehensive Unit Test Analyzer
 
-This Streamlit-based app provides comprehensive unit test analysis, code coverage, and test case generation for JavaScript, Angular, React, Python, Java, and .NET projects.
+This Streamlit-based app provides comprehensive unit test analysis, code coverage, and test case generation for JavaScript, Angular, React, Python, Java, and .NET projects. It now includes OAuth authentication support for Google, Facebook, and GitHub.
 
 ## Setup
 
@@ -16,7 +16,20 @@ This Streamlit-based app provides comprehensive unit test analysis, code coverag
    - Name: REPLIT_TOKEN
    - Value: Your Replit token (You can find this in your Replit account settings)
 
-4. Push your code to the GitHub repository:
+4. Set up OAuth API keys:
+   - Create OAuth applications in the Google, Facebook, and GitHub developer consoles.
+   - In your Replit project, go to the "Secrets" tab in the left sidebar.
+   - Add the following secrets with their respective values:
+     - GOOGLE_CLIENT_ID
+     - GOOGLE_CLIENT_SECRET
+     - FACEBOOK_CLIENT_ID
+     - FACEBOOK_CLIENT_SECRET
+     - GITHUB_CLIENT_ID
+     - GITHUB_CLIENT_SECRET
+
+5. Update the REDIRECT_URI in oauth_config.py with your Replit app URL.
+
+6. Push your code to the GitHub repository:
    - In Replit, commit your changes and push them to the connected GitHub repository.
 
 Now, whenever you push changes to the main branch of your GitHub repository, the GitHub Actions workflow will automatically run tests, perform linting, and deploy the updated app to Replit.
@@ -24,10 +37,11 @@ Now, whenever you push changes to the main branch of your GitHub repository, the
 ## Usage
 
 1. Open the Streamlit app in Replit.
-2. Choose between entering a file path or pasting file content.
-3. Select the project type (JavaScript, Angular, React, Python, Java, or .NET).
-4. Click "Analyze Project" to run the analysis.
-5. View the results, including code coverage, test quality, and generated test cases.
+2. Log in using your Google, Facebook, or GitHub account.
+3. Choose between entering a file path or pasting file content.
+4. Select the project type (JavaScript, Angular, React, Python, Java, or .NET).
+5. Click "Analyze Project" to run the analysis.
+6. View the results, including code coverage, test quality, and generated test cases.
 
 ## Contributing
 

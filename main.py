@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -92,7 +92,7 @@ def main():
     st.caption(f"Version: {__version__}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
+    input_type = st.sidebar.radio("Select input type", ["File Upload", "File Path", "File Content"])
 
     # Default file content for testing
     default_file_content = """
@@ -106,7 +106,11 @@ def test_add():
 
     file_content = None
 
-    if input_type == "File Path":
+    if input_type == "File Upload":
+        uploaded_file = st.sidebar.file_uploader("Choose a file", type=['py', 'js', 'ts', 'java', 'cs'])
+        if uploaded_file is not None:
+            file_content = uploaded_file.getvalue().decode("utf-8")
+    elif input_type == "File Path":
         file_path = st.sidebar.text_input("Enter file path")
         if file_path:
             try:
@@ -197,7 +201,7 @@ def test_add():
                 st.error(f"An error occurred during the analysis: {str(e)}")
                 st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
     else:
-        st.info("Please enter a file path or paste file content to begin analysis.")
+        st.info("Please upload a file, enter a file path, or paste file content to begin analysis.")
 
     st.sidebar.markdown("---")
     st.sidebar.info("This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases.")

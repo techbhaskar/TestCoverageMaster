@@ -347,6 +347,20 @@ socks = ["socksio (==1.*)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "httpx-oauth"
+version = "0.14.1"
+description = "Async OAuth client using HTTPX"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "httpx_oauth-0.14.1-py3-none-any.whl", hash = "sha256:3ccf35760d157a9abbf4a78024b744b5532ec5d4d03fc1db3e71123ce9d33e32"},
+    {file = "httpx_oauth-0.14.1.tar.gz", hash = "sha256:e58c60bce99568b4e98ce88abf0e2111a9b6c7f79c29bea88cc89d9edb78dfbc"},
+]
+
+[package.dependencies]
+httpx = ">=0.18,<1.0.0"
+
+[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1175,6 +1189,20 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-dotenv"
+version = "1.0.1"
+description = "Read key-value pairs from a .env file and set them as environment variables"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
+]
+
+[package.extras]
+cli = ["click (>=5.0)"]
+
+[[package]]
 name = "pytz"
 version = "2024.2"
 description = "World timezone definitions, modern and historical"
@@ -1420,6 +1448,22 @@ watchdog = {version = ">=2.1.5,<5", markers = "platform_system != \"Darwin\""}
 snowflake = ["snowflake-connector-python (>=2.8.0)", "snowflake-snowpark-python[modin] (>=1.17.0)"]
 
 [[package]]
+name = "streamlit-oauth"
+version = "0.1.13"
+description = "Simple OAuth2 authorization code flow for Streamlit"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "streamlit_oauth-0.1.13-py3-none-any.whl", hash = "sha256:464dd3c77c502b97fd5cf657d1b11b55b2b79df50aceceb111db5fda04b46d3d"},
+    {file = "streamlit_oauth-0.1.13.tar.gz", hash = "sha256:96192085e6734b8804953f1496f7910acccff991a16b257add604498b66b64bc"},
+]
+
+[package.dependencies]
+httpx-oauth = "0.14.1"
+python-dotenv = "1.0.1"
+streamlit = ">=1.28.1"
+
+[[package]]
 name = "tenacity"
 version = "8.5.0"
 description = "Retry code until it succeeds"
@@ -1574,4 +1618,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "17a254aa0e1d1c682d2e1d62c5e4c2f96aecbc6c73fd9a2438d379490f48339e"
+content-hash = "cd5b471bbb90276f0f9db8435415edb1efd6a6d39d8f255c80fe78d2d13243a7"

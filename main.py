@@ -82,14 +82,19 @@ def display_results(code_analysis, test_analysis, project_type):
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
-    # Initialize session state for storing generated tests
+    # Initialize session state for storing generated tests and usage counter
     if 'unit_tests' not in st.session_state:
         st.session_state.unit_tests = None
     if 'functional_tests' not in st.session_state:
         st.session_state.functional_tests = None
+    if 'usage_counter' not in st.session_state:
+        st.session_state.usage_counter = 0
 
     st.title("Comprehensive Unit Test Analyzer")
     st.caption(f"Version: {__version__}")
+    
+    # Display usage counter
+    st.write(f"Total analyses performed: {st.session_state.usage_counter}")
 
     st.sidebar.header("Input Project Files")
     input_type = st.sidebar.radio("Select input type", ["File Upload", "File Path", "File Content"])
@@ -136,6 +141,9 @@ def test_add():
     st.sidebar.write(f"Analyze Button: {analyze_button}")
 
     if file_content and (analyze_button or input_type == "File Content"):
+        # Increment usage counter
+        st.session_state.usage_counter += 1
+        
         with st.spinner("Analyzing project..."):
             try:
                 # Process input

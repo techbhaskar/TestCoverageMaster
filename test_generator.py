@@ -1,9 +1,12 @@
 import os
 from typing import Dict, Tuple
 import openai
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
+# Set up OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> Tuple[str, str]:
     """
     Generate both unit and functional test cases for uncovered functions using AI.
@@ -14,33 +17,33 @@ def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) 
     functional_tests = []
     
     for func in uncovered_functions:
-        if project_type in ['Angular', 'React', 'JavaScript']:
-            language = 'JavaScript' if project_type in ['JavaScript', 'React'] else 'TypeScript'
-        elif project_type == 'Python':
-            language = 'Python'
-        elif project_type == 'Java':
-            language = 'Java'
-        elif project_type == '.NET':
-            language = 'C#'
-        else:
-            language = 'JavaScript'
-        
-        unit_test = generate_ai_test_case(func, project_type, language, 'unit')
-        functional_test = generate_ai_test_case(func, project_type, language, 'functional')
+        unit_test = generate_ai_test_case(func, project_type, 'unit')
+        functional_test = generate_ai_test_case(func, project_type, 'functional')
         
         unit_tests.append(unit_test)
         functional_tests.append(functional_test)
     
     return "\n\n".join(unit_tests), "\n\n".join(functional_tests)
 
-def generate_ai_test_case(function_name: str, project_type: str, language: str, test_type: str) -> str:
+def generate_ai_test_case(function_name: str, project_type: str, test_type: str) -> str:
     """
     Generate a test case for a given function using OpenAI's GPT-3.
     """
     if project_type in ['Angular', 'React', 'JavaScript']:
-        framework = "Jest" if test_type == 'unit' else "Cypress"
+        framework = "Jest" if project_type in ['JavaScript', 'React'] else "Jasmine"
+        language = 'JavaScript' if project_type in ['JavaScript', 'React'] else 'TypeScript'
+    elif project_type == 'Python':
+        framework = "unittest"
+        language = 'Python'
+    elif project_type == 'Java':
+        framework = "JUnit"
+        language = 'Java'
+    elif project_type == '.NET':
+        framework = "NUnit"
+        language = 'C#'
     else:
-        framework = project_type
+        framework = "Jest"
+        language = 'JavaScript'
 
     prompt = f"""
     Generate a {test_type} test case using {framework} for the following {project_type} function in {language}:
@@ -69,6 +72,9 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str, 
 
         generated_test = response.choices[0].text.strip()
         return f"// {test_type.capitalize()} Test for {function_name} using {framework}\n{generated_test}"
+    except openai.error.RateLimitError:
+        print("OpenAI API rate limit exceeded. Retrying...")
+        raise
     except Exception as e:
         print(f"Error generating AI test case: {str(e)}")
         return generate_fallback_test_case(function_name, project_type, test_type)

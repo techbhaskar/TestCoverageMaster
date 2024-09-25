@@ -85,7 +85,7 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git add main.py && git commit -m 'Update version to 1.0.0' && git tag v1 && git push origin main --tags"
+args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git add main.py test_generator.py && git commit -m 'Update version to 1.0.0 and implement OpenAI test generation' && git tag v1 && git push origin main --tags"
 
 [deployment]
 run = ["sh", "-c", "streamlit run main.py --server.port 5000"]

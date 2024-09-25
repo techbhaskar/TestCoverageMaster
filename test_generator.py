@@ -3,14 +3,14 @@ from typing import Dict, Tuple
 import openai
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-# Set up OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> Tuple[str, str]:
+def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str, api_key: str = None) -> Tuple[str, str]:
     """
     Generate both unit and functional test cases for uncovered functions using AI.
     """
+    # Set up OpenAI API key
+    openai.api_key = api_key or os.getenv("OPENAI_API_KEY")
+
     uncovered_functions = code_analysis['coverage']['uncovered_functions']
     
     unit_tests = []

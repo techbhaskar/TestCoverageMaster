@@ -31,6 +31,10 @@ args = "Initialize Git and Push Changes"
 task = "workflow.run"
 args = "Update Version and Create v1 Tag"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Create v1 Tag"
+
 [[workflows.workflow]]
 name = "Start Streamlit App"
 author = "agent"
@@ -86,6 +90,17 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git add main.py test_generator.py && git commit -m 'Update version to 1.0.0 and implement OpenAI test generation' && git tag v1 && git push origin main --tags"
+
+[[workflows.workflow]]
+name = "Create v1 Tag"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git add . && git commit -m 'Prepare for v1 release' && git tag v1 && git push origin main --tags"
 
 [deployment]
 run = ["sh", "-c", "streamlit run main.py --server.port 5000"]

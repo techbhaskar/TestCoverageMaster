@@ -10,7 +10,7 @@ import openai
 from tenacity import RetryError
 
 # Add version number
-__version__ = "1.0.1"
+__version__ = "1.0.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -27,11 +27,9 @@ def get_file_extension(project_type):
         return "txt"
 
 def add_numbers(a: int, b: int) -> int:
-    """Add two numbers together."""
     return a + b
 
 def get_test_quality_suggestions():
-    """Provide suggestions for improving test quality based on best practices."""
     suggestions = [
         "Improve test coverage by adding more test cases, especially for edge cases and different scenarios.",
         "Implement parameterized tests to test multiple inputs efficiently.",
@@ -82,7 +80,6 @@ def display_results(code_analysis, test_analysis, project_type):
         st.warning("Functional coverage data is not available.")
 
 def generate_fallback_tests(code_analysis, test_analysis, project_type):
-    """Generate fallback tests when OpenAI API is not available."""
     uncovered_functions = code_analysis['coverage']['uncovered_functions']
     
     unit_tests = []
@@ -157,6 +154,9 @@ def test_add():
     if file_content and (analyze_button or input_type == "File Content"):
         st.session_state.usage_counter += 1
         
+        # Prompt user for OpenAI API key
+        user_api_key = st.text_input("Enter your OpenAI API key (optional):", type="password")
+        
         with st.spinner("Analyzing project..."):
             try:
                 processed_files = process_upload(file_content)
@@ -169,7 +169,7 @@ def test_add():
                 st.write("Debug: Test analysis completed")
                 
                 try:
-                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type, api_key=user_api_key)
                     st.write("Debug: Test generation completed")
                 except RetryError:
                     st.warning("OpenAI API rate limit exceeded. Using fallback test generation.")

@@ -35,6 +35,14 @@ args = "Update Version and Create v1 Tag"
 task = "workflow.run"
 args = "Create v1 Tag"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Create and Push v1 Tag"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Check Git Status"
+
 [[workflows.workflow]]
 name = "Start Streamlit App"
 author = "agent"
@@ -101,6 +109,28 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git add . && git commit -m 'Prepare for v1 release' && git tag v1 && git push origin main --tags"
+
+[[workflows.workflow]]
+name = "Create and Push v1 Tag"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git config --global user.email 'replit@example.com' && git config --global user.name 'Replit User' && git tag -f v1 && git push origin v1 -f"
+
+[[workflows.workflow]]
+name = "Check Git Status"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git status && git tag -l"
 
 [deployment]
 run = ["sh", "-c", "streamlit run main.py --server.port 5000"]

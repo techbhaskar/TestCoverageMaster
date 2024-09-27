@@ -10,6 +10,6 @@ import openai
 from tenacity import RetryError
 
 # Add version number
-__version__ = "1.0.1"
+__version__ = "1.0.0"
 
 # Rest of the file remains unchanged

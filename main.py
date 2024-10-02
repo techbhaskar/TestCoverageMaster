@@ -10,7 +10,7 @@ import openai
 from tenacity import RetryError
 
 # Add version number
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:

@@ -1,8 +1,9 @@
 import os
 from typing import Dict, Tuple
 import openai
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_tests(code_analysis: Dict, test_analysis: Dict, project_type: str) -> Tuple[str, str]:
     """
@@ -68,7 +69,7 @@ def generate_ai_test_case(function_name: str, project_type: str, language: str, 
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are an expert test engineer."},
@@ -95,20 +96,31 @@ def generate_fallback_test_case(function_name: str, project_type: str, test_type
             return f"""
 // Unit Test for {function_name} using Jest
 describe('{function_name}', () => {{
+  let mockDependency;
+
+  beforeEach(() => {{
+    mockDependency = jest.fn();
+  }});
+
   test('should be defined', () => {{
     expect({function_name}).toBeDefined();
   }});
 
   test('should handle basic functionality', () => {{
-    // TODO: Implement basic functionality test
+    const result = {function_name}('test input');
+    expect(result).toBe('expected output');
   }});
 
   test('should handle edge cases', () => {{
-    // TODO: Implement edge case tests
+    expect({function_name}('')).toBe('empty input handled');
+    expect({function_name}(null)).toBe('null input handled');
   }});
 
   test('should work with mocks', () => {{
-    // TODO: Implement tests with mocks
+    mockDependency.mockReturnValue('mocked value');
+    const result = {function_name}(mockDependency);
+    expect(mockDependency).toHaveBeenCalled();
+    expect(result).toBe('expected output with mock');
   }});
 }});
 """
@@ -117,28 +129,46 @@ describe('{function_name}', () => {{
 // Integration Test for {function_name} using Cypress
 describe('{function_name} - Integration Test', () => {{
   beforeEach(() => {{
-    // TODO: Set up any necessary test fixtures or visit the appropriate page
-    cy.visit('/your-page');
+    cy.visit('/test-page');
+    cy.intercept('GET', '/api/data', {{ fixture: 'testData.json' }}).as('getData');
   }});
 
   it('should perform expected actions', () => {{
-    // TODO: Implement integration test steps
+    cy.get('#inputField').type('test input');
+    cy.get('#submitButton').click();
+    cy.wait('@getData');
+    cy.get('#result').should('contain', 'Expected output');
   }});
 
   it('should handle user interactions', () => {{
-    // TODO: Implement user interaction tests
+    cy.get('#dropdown').select('option1');
+    cy.get('#checkbox').check();
+    cy.get('#submitForm').click();
+    cy.get('#formResult').should('contain', 'Form submitted successfully');
   }});
 
   it('should integrate with other components', () => {{
-    // TODO: Implement integration tests with other components
+    cy.get('#componentA').should('be.visible');
+    cy.get('#triggerIntegration').click();
+    cy.get('#componentB').should('contain', 'Integration successful');
   }});
 
   it('should persist and retrieve data correctly', () => {{
-    // TODO: Implement data persistence and retrieval tests
+    const testData = {{ key: 'value' }};
+    cy.window().then((win) => {{
+      win.localStorage.setItem('testData', JSON.stringify(testData));
+    }});
+    cy.reload();
+    cy.window().its('localStorage.testData').should('eq', JSON.stringify(testData));
   }});
 
   it('should handle errors and recover in integrated environments', () => {{
-    // TODO: Implement error handling and recovery tests
+    cy.intercept('GET', '/api/data', {{ statusCode: 500 }}).as('getDataError');
+    cy.get('#fetchData').click();
+    cy.get('#errorMessage').should('be.visible');
+    cy.get('#retryButton').click();
+    cy.wait('@getData');
+    cy.get('#result').should('contain', 'Data fetched successfully');
   }});
 }});
 """
@@ -147,26 +177,26 @@ describe('{function_name} - Integration Test', () => {{
             return f"""
 # Unit Test for {function_name}
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 class Test{function_name.capitalize()}(unittest.TestCase):
     def setUp(self):
-        # TODO: Set up any necessary test fixtures
-        pass
+        self.mock_dependency = MagicMock()
 
     def test_{function_name}_basic(self):
-        # TODO: Implement basic functionality test
-        self.assertTrue({function_name}())
+        result = {function_name}('test input')
+        self.assertEqual(result, 'expected output')
 
     def test_{function_name}_edge_cases(self):
-        # TODO: Implement edge case tests
-        pass
+        self.assertEqual({function_name}(''), 'empty input handled')
+        self.assertEqual({function_name}(None), 'null input handled')
 
     @patch('module.some_dependency')
     def test_{function_name}_with_mock(self, mock_dependency):
-        # TODO: Implement test with mock
-        mock_dependency.return_value = 'mocked_value'
-        self.assertEqual({function_name}(), 'expected_result')
+        mock_dependency.return_value = 'mocked value'
+        result = {function_name}(mock_dependency)
+        mock_dependency.assert_called_once()
+        self.assertEqual(result, 'expected output with mock')
 
 if __name__ == '__main__':
     unittest.main()
@@ -176,43 +206,72 @@ if __name__ == '__main__':
 # Integration Test for {function_name}
 import pytest
 from your_app import app, db
+from your_app.models import User, Product
 
 @pytest.fixture(scope='module')
 def test_client():
     app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
     with app.test_client() as testing_client:
         with app.app_context():
+            db.create_all()
             yield testing_client
+            db.drop_all()
 
 @pytest.fixture(scope='module')
-def init_database():
-    db.create_all()
-    yield db
-    db.drop_all()
+def init_database(test_client):
+    user = User(username='testuser', email='test@example.com')
+    product = Product(name='Test Product', price=9.99)
+    db.session.add(user)
+    db.session.add(product)
+    db.session.commit()
+    yield
 
 def test_{function_name}_integration(test_client, init_database):
-    # TODO: Implement integration test
-    response = test_client.get('/your-endpoint')
+    response = test_client.get('/api/{function_name}')
     assert response.status_code == 200
     assert b'Expected content' in response.data
 
 def test_{function_name}_user_interaction(test_client, init_database):
-    # TODO: Implement user interaction test
-    response = test_client.post('/your-endpoint', data={{'key': 'value'}})
+    response = test_client.post('/api/{function_name}', json={{'key': 'value'}})
     assert response.status_code == 200
-    assert b'Expected result' in response.data
-
-def test_{function_name}_error_handling(test_client, init_database):
-    # TODO: Implement error handling test
-    response = test_client.get('/nonexistent-endpoint')
-    assert response.status_code == 404
+    assert b'Success' in response.data
 
 def test_{function_name}_data_persistence(test_client, init_database):
-    # TODO: Implement data persistence test
-    test_client.post('/create-data', data={{'key': 'value'}})
-    response = test_client.get('/retrieve-data')
+    response = test_client.post('/api/create_product', json={{'name': 'New Product', 'price': 19.99}})
+    assert response.status_code == 201
+    
+    response = test_client.get('/api/products')
     assert response.status_code == 200
-    assert b'value' in response.data
+    assert b'New Product' in response.data
+
+def test_{function_name}_error_handling(test_client, init_database):
+    response = test_client.get('/api/nonexistent')
+    assert response.status_code == 404
+    
+    response = test_client.post('/api/{function_name}', json={{'invalid': 'data'}})
+    assert response.status_code == 400
+    assert b'Error' in response.data
+
+def test_{function_name}_integration_workflow(test_client, init_database):
+    # Step 1: Create a new user
+    response = test_client.post('/api/register', json={{'username': 'newuser', 'email': 'new@example.com', 'password': 'password123'}})
+    assert response.status_code == 201
+    
+    # Step 2: Log in
+    response = test_client.post('/api/login', json={{'username': 'newuser', 'password': 'password123'}})
+    assert response.status_code == 200
+    token = response.json['token']
+    
+    # Step 3: Create a new product (authenticated)
+    headers = {{'Authorization': f'Bearer {{token}}'}}
+    response = test_client.post('/api/create_product', json={{'name': 'User Product', 'price': 29.99}}, headers=headers)
+    assert response.status_code == 201
+    
+    # Step 4: Verify the product was created
+    response = test_client.get('/api/products')
+    assert response.status_code == 200
+    assert b'User Product' in response.data
 """
     elif project_type == 'Java':
         if test_type == 'unit':
@@ -235,25 +294,28 @@ class {function_name.capitalize()}Test {{
 
     @BeforeEach
     void setUp() {{
-        // TODO: Set up any necessary test fixtures
+        mockDependency = mock(SomeDependency.class);
+        classUnderTest = new YourClass(mockDependency);
     }}
 
     @Test
     void test{function_name.capitalize()}Basic() {{
-        // TODO: Implement basic functionality test
-        assertTrue(classUnderTest.{function_name}());
+        String result = classUnderTest.{function_name}("test input");
+        assertEquals("expected output", result);
     }}
 
     @Test
     void test{function_name.capitalize()}EdgeCases() {{
-        // TODO: Implement edge case tests
+        assertEquals("empty input handled", classUnderTest.{function_name}(""));
+        assertEquals("null input handled", classUnderTest.{function_name}(null));
     }}
 
     @Test
     void test{function_name.capitalize()}WithMock() {{
-        // TODO: Implement test with mock
-        when(mockDependency.someMethod()).thenReturn("mocked_value");
-        assertEquals("expected_result", classUnderTest.{function_name}());
+        when(mockDependency.someMethod()).thenReturn("mocked value");
+        String result = classUnderTest.{function_name}("test input");
+        verify(mockDependency).someMethod();
+        assertEquals("expected output with mock", result);
     }}
 }}
 """
@@ -266,7 +328,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -286,39 +351,83 @@ class {function_name.capitalize()}IntegrationTest {{
 
     @Test
     void test{function_name.capitalize()}Integration() {{
-        // TODO: Implement integration test
-        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/your-endpoint", String.class);
-        assertEquals(200, response.getStatusCodeValue());
+        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/api/{function_name}", String.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().contains("Expected content"));
     }}
 
     @Test
     void test{function_name.capitalize()}UserInteraction() {{
-        // TODO: Implement user interaction test
-        ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/your-endpoint", "request body", String.class);
-        assertEquals(200, response.getStatusCodeValue());
-        assertTrue(response.getBody().contains("Expected result"));
-    }}
-
-    @Test
-    void test{function_name.capitalize()}ErrorHandling() {{
-        // TODO: Implement error handling test
-        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/nonexistent-endpoint", String.class);
-        assertEquals(404, response.getStatusCodeValue());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> request = new HttpEntity<>("{{\"key\": \"value\"}}", headers);
+        
+        ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/api/{function_name}", request, String.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("Success"));
     }}
 
     @Test
     void test{function_name.capitalize()}DataPersistence() {{
-        // TODO: Implement data persistence test
-        restTemplate.postForEntity(baseUrl + "/create-data", "{{\"key\": \"value\"}}", String.class);
-        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/retrieve-data", String.class);
-        assertEquals(200, response.getStatusCodeValue());
-        assertTrue(response.getBody().contains("value"));
+        // Create a new product
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> request = new HttpEntity<>("{{\"name\": \"New Product\", \"price\": 19.99}}", headers);
+        
+        ResponseEntity<String> createResponse = restTemplate.postForEntity(baseUrl + "/api/create_product", request, String.class);
+        assertEquals(HttpStatus.CREATED, createResponse.getStatusCode());
+        
+        // Verify the product was created
+        ResponseEntity<String> getResponse = restTemplate.getForEntity(baseUrl + "/api/products", String.class);
+        assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+        assertTrue(getResponse.getBody().contains("New Product"));
+    }}
+
+    @Test
+    void test{function_name.capitalize()}ErrorHandling() {{
+        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/api/nonexistent", String.class);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> request = new HttpEntity<>("{{\"invalid\": \"data\"}}", headers);
+        
+        ResponseEntity<String> errorResponse = restTemplate.postForEntity(baseUrl + "/api/{function_name}", request, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, errorResponse.getStatusCode());
+        assertTrue(errorResponse.getBody().contains("Error"));
+    }}
+
+    @Test
+    void test{function_name.capitalize()}IntegrationWorkflow() {{
+        // Step 1: Register a new user
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> registerRequest = new HttpEntity<>("{{\"username\": \"newuser\", \"email\": \"new@example.com\", \"password\": \"password123\"}}", headers);
+        
+        ResponseEntity<String> registerResponse = restTemplate.postForEntity(baseUrl + "/api/register", registerRequest, String.class);
+        assertEquals(HttpStatus.CREATED, registerResponse.getStatusCode());
+        
+        // Step 2: Log in
+        HttpEntity<String> loginRequest = new HttpEntity<>("{{\"username\": \"newuser\", \"password\": \"password123\"}}", headers);
+        ResponseEntity<String> loginResponse = restTemplate.postForEntity(baseUrl + "/api/login", loginRequest, String.class);
+        assertEquals(HttpStatus.OK, loginResponse.getStatusCode());
+        String token = loginResponse.getBody(); // Assume the body contains the token
+        
+        // Step 3: Create a new product (authenticated)
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<String> createProductRequest = new HttpEntity<>("{{\"name\": \"User Product\", \"price\": 29.99}}", headers);
+        ResponseEntity<String> createProductResponse = restTemplate.postForEntity(baseUrl + "/api/create_product", createProductRequest, String.class);
+        assertEquals(HttpStatus.CREATED, createProductResponse.getStatusCode());
+        
+        // Step 4: Verify the product was created
+        ResponseEntity<String> getProductsResponse = restTemplate.getForEntity(baseUrl + "/api/products", String.class);
+        assertEquals(HttpStatus.OK, getProductsResponse.getStatusCode());
+        assertTrue(getProductsResponse.getBody().contains("User Product"));
     }}
 
     @AfterEach
     void tearDown() {{
-        // TODO: Clean up any resources if needed
+        // Clean up test data if needed
     }}
 }}
 """
@@ -328,6 +437,7 @@ class {function_name.capitalize()}IntegrationTest {{
 // Unit Test for {function_name}
 using NUnit.Framework;
 using Moq;
+using YourNamespace;
 
 [TestFixture]
 public class {function_name.capitalize()}Tests
@@ -345,22 +455,24 @@ public class {function_name.capitalize()}Tests
     [Test]
     public void {function_name}_Basic()
     {{
-        // TODO: Implement basic functionality test
-        Assert.IsTrue(_classUnderTest.{function_name}());
+        var result = _classUnderTest.{function_name}("test input");
+        Assert.AreEqual("expected output", result);
     }}
 
     [Test]
     public void {function_name}_EdgeCases()
     {{
-        // TODO: Implement edge case tests
+        Assert.AreEqual("empty input handled", _classUnderTest.{function_name}(""));
+        Assert.AreEqual("null input handled", _classUnderTest.{function_name}(null));
     }}
 
     [Test]
     public void {function_name}_WithMock()
     {{
-        // TODO: Implement test with mock
-        _mockDependency.Setup(m => m.SomeMethod()).Returns("mocked_value");
-        Assert.AreEqual("expected_result", _classUnderTest.{function_name}());
+        _mockDependency.Setup(m => m.SomeMethod()).Returns("mocked value");
+        var result = _classUnderTest.{function_name}("test input");
+        _mockDependency.Verify(m => m.SomeMethod(), Times.Once);
+        Assert.AreEqual("expected output with mock", result);
     }}
 }}
 """
@@ -373,6 +485,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using YourNamespace;
+using System.Text;
 
 [TestFixture]
 public class {function_name.capitalize()}IntegrationTests
@@ -397,8 +510,7 @@ public class {function_name.capitalize()}IntegrationTests
     [Test]
     public async Task {function_name}_Integration()
     {{
-        // TODO: Implement integration test
-        var response = await _client.GetAsync("/your-endpoint");
+        var response = await _client.GetAsync("/api/{function_name}");
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
         Assert.That(content, Does.Contain("Expected content"));
@@ -407,33 +519,67 @@ public class {function_name.capitalize()}IntegrationTests
     [Test]
     public async Task {function_name}_UserInteraction()
     {{
-        // TODO: Implement user interaction test
-        var requestContent = new StringContent("{{\"key\": \"value\"}}", System.Text.Encoding.UTF8, "application/json");
-        var response = await _client.PostAsync("/your-endpoint", requestContent);
+        var requestContent = new StringContent("{{\"key\": \"value\"}}", Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync("/api/{function_name}", requestContent);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        Assert.That(content, Does.Contain("Expected result"));
-    }}
-
-    [Test]
-    public async Task {function_name}_ErrorHandling()
-    {{
-        // TODO: Implement error handling test
-        var response = await _client.GetAsync("/nonexistent-endpoint");
-        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+        Assert.That(content, Does.Contain("Success"));
     }}
 
     [Test]
     public async Task {function_name}_DataPersistence()
     {{
-        // TODO: Implement data persistence test
-        var createContent = new StringContent("{{\"key\": \"value\"}}", System.Text.Encoding.UTF8, "application/json");
-        await _client.PostAsync("/create-data", createContent);
+        // Create a new product
+        var createContent = new StringContent("{{\"name\": \"New Product\", \"price\": 19.99}}", Encoding.UTF8, "application/json");
+        var createResponse = await _client.PostAsync("/api/create_product", createContent);
+        createResponse.EnsureSuccessStatusCode();
 
-        var response = await _client.GetAsync("/retrieve-data");
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        Assert.That(content, Does.Contain("value"));
+        // Verify the product was created
+        var getResponse = await _client.GetAsync("/api/products");
+        getResponse.EnsureSuccessStatusCode();
+        var content = await getResponse.Content.ReadAsStringAsync();
+        Assert.That(content, Does.Contain("New Product"));
+    }}
+
+    [Test]
+    public async Task {function_name}_ErrorHandling()
+    {{
+        var response = await _client.GetAsync("/api/nonexistent");
+        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+
+        var errorContent = new StringContent("{{\"invalid\": \"data\"}}", Encoding.UTF8, "application/json");
+        var errorResponse = await _client.PostAsync("/api/{function_name}", errorContent);
+        Assert.That(errorResponse.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.BadRequest));
+        var content = await errorResponse.Content.ReadAsStringAsync();
+        Assert.That(content, Does.Contain("Error"));
+    }}
+
+    [Test]
+    public async Task {function_name}_IntegrationWorkflow()
+    {{
+        // Step 1: Register a new user
+        var registerContent = new StringContent("{{\"username\": \"newuser\", \"email\": \"new@example.com\", \"password\": \"password123\"}}", Encoding.UTF8, "application/json");
+        var registerResponse = await _client.PostAsync("/api/register", registerContent);
+        Assert.That(registerResponse.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created));
+
+        // Step 2: Log in
+        var loginContent = new StringContent("{{\"username\": \"newuser\", \"password\": \"password123\"}}", Encoding.UTF8, "application/json");
+        var loginResponse = await _client.PostAsync("/api/login", loginContent);
+        Assert.That(loginResponse.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        var token = JsonConvert.DeserializeObject<dynamic>(loginResult).token.ToString();
+
+        // Step 3: Create a new product (authenticated)
+        var createProductContent = new StringContent("{{\"name\": \"User Product\", \"price\": 29.99}}", Encoding.UTF8, "application/json");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var createProductResponse = await _client.PostAsync("/api/create_product", createProductContent);
+        Assert.That(createProductResponse.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created));
+
+        // Step 4: Verify the product was created
+        var getProductsResponse = await _client.GetAsync("/api/products");
+        Assert.That(getProductsResponse.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+        var productsContent = await getProductsResponse.Content.ReadAsStringAsync();
+        Assert.That(productsContent, Does.Contain("User Product"));
     }}
 }}
 """
@@ -441,20 +587,67 @@ public class {function_name.capitalize()}IntegrationTests
         return f"""
 // {test_type.capitalize()} Test for {function_name}
 describe('{function_name} - {test_type.capitalize()} Test', () => {{
+  let mockDependency;
+
+  beforeEach(() => {{
+    mockDependency = jest.fn();
+  }});
+
   test('should be defined', () => {{
     expect({function_name}).toBeDefined();
   }});
 
-  test('should handle edge cases', () => {{
-    // TODO: Implement edge case tests
+  test('should handle basic functionality', () => {{
+    const result = {function_name}('test input');
+    expect(result).toBe('expected output');
   }});
 
-  {{"test('should work with mocks', () => {{\n    // TODO: Implement tests with mocks\n  }});" if test_type == 'unit' else "test('should integrate with other components', () => {{\n    // TODO: Implement integration tests\n  }});"}}
+  test('should handle edge cases', () => {{
+    expect({function_name}('')).toBe('empty input handled');
+    expect({function_name}(null)).toBe('null input handled');
+  }});
 
-  {{"" if test_type == 'unit' else "test('should handle user interactions', () => {{\n    // TODO: Implement user interaction tests\n  }});"}}
+  test('should work with mocks', () => {{
+    mockDependency.mockReturnValue('mocked value');
+    const result = {function_name}(mockDependency);
+    expect(mockDependency).toHaveBeenCalled();
+    expect(result).toBe('expected output with mock');
+  }});
 
-  {{"" if test_type == 'unit' else "test('should persist and retrieve data', () => {{\n    // TODO: Implement data persistence and retrieval tests\n  }});"}}
+  test('should integrate with other components', () => {{
+    // Setup mock API
+    jest.spyOn(global, 'fetch').mockResolvedValue({{
+      json: jest.fn().mockResolvedValue({{ data: 'test data' }}),
+    }});
 
-  {{"" if test_type == 'unit' else "test('should handle errors in integrated environments', () => {{\n    // TODO: Implement error handling and recovery tests\n  }});"}}
+    // Test integration
+    return {function_name}()
+      .then(result => {{
+        expect(result).toBe('integrated result');
+        expect(fetch).toHaveBeenCalledWith('/api/data');
+      }});
+  }});
+
+  test('should handle user interactions', () => {{
+    const mockCallback = jest.fn();
+    const wrapper = mount(<YourComponent onAction={{mockCallback}} />);
+    wrapper.find('button').simulate('click');
+    expect(mockCallback).toHaveBeenCalled();
+  }});
+
+  test('should persist and retrieve data', () => {{
+    const testData = {{ key: 'value' }};
+    localStorage.setItem('testData', JSON.stringify(testData));
+    const result = {function_name}();
+    expect(result).toEqual(testData);
+  }});
+
+  test('should handle errors in integrated environments', () => {{
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('API Error'));
+    return {function_name}()
+      .catch(error => {{
+        expect(error.message).toBe('API Error');
+      }});
+  }});
 }});
 """

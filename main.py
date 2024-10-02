@@ -6,11 +6,9 @@ from test_analyzer import analyze_tests
 from test_generator import generate_tests
 from visualization import display_coverage, display_test_quality, display_functional_coverage
 from utils import process_upload
-import openai
-from tenacity import RetryError
 
 # Add version number
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -81,40 +79,22 @@ def display_results(code_analysis, test_analysis, project_type):
     else:
         st.warning("Functional coverage data is not available.")
 
-def generate_fallback_tests(code_analysis, test_analysis, project_type):
-    """Generate fallback tests when OpenAI API is not available."""
-    uncovered_functions = code_analysis['coverage']['uncovered_functions']
-    
-    unit_tests = []
-    functional_tests = []
-    
-    for func in uncovered_functions:
-        unit_test = f"// Fallback Unit Test for {func}\n// TODO: Implement unit test for {func}"
-        functional_test = f"// Fallback Functional Test for {func}\n// TODO: Implement functional test for {func}"
-        
-        unit_tests.append(unit_test)
-        functional_tests.append(functional_test)
-    
-    return "\n\n".join(unit_tests), "\n\n".join(functional_tests)
-
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
+    # Initialize session state for storing generated tests
     if 'unit_tests' not in st.session_state:
         st.session_state.unit_tests = None
     if 'functional_tests' not in st.session_state:
         st.session_state.functional_tests = None
-    if 'usage_counter' not in st.session_state:
-        st.session_state.usage_counter = 0
 
     st.title("Comprehensive Unit Test Analyzer")
     st.caption(f"Version: {__version__}")
-    
-    st.write(f"Total analyses performed: {st.session_state.usage_counter}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", ["File Upload", "File Path", "File Content"])
+    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
 
+    # Default file content for testing
     default_file_content = """
 def add(a, b):
     return a + b
@@ -126,11 +106,7 @@ def test_add():
 
     file_content = None
 
-    if input_type == "File Upload":
-        uploaded_file = st.sidebar.file_uploader("Choose a file", type=['py', 'js', 'ts', 'java', 'cs'])
-        if uploaded_file is not None:
-            file_content = uploaded_file.getvalue().decode("utf-8")
-    elif input_type == "File Path":
+    if input_type == "File Path":
         file_path = st.sidebar.text_input("Enter file path")
         if file_path:
             try:
@@ -148,6 +124,7 @@ def test_add():
     
     analyze_button = st.sidebar.button("Analyze Project")
 
+    # Debug information
     st.sidebar.write("Debug Info:")
     st.sidebar.write(f"Input Type: {input_type}")
     st.sidebar.write(f"File Content: {file_content[:50] if file_content else 'None'}...")
@@ -155,38 +132,32 @@ def test_add():
     st.sidebar.write(f"Analyze Button: {analyze_button}")
 
     if file_content and (analyze_button or input_type == "File Content"):
-        st.session_state.usage_counter += 1
-        
         with st.spinner("Analyzing project..."):
             try:
+                # Process input
                 processed_files = process_upload(file_content)
                 st.write("Debug: Files processed successfully")
                 
+                # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
                 st.write("Debug: Code analysis completed")
                 
+                # Analyze existing tests
                 test_analysis = analyze_tests(processed_files, project_type)
                 st.write("Debug: Test analysis completed")
                 
-                try:
-                    unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
-                    st.write("Debug: Test generation completed")
-                except RetryError:
-                    st.warning("OpenAI API rate limit exceeded. Using fallback test generation.")
-                    unit_tests, functional_tests = generate_fallback_tests(code_analysis, test_analysis, project_type)
-                except openai.error.AuthenticationError:
-                    st.error("OpenAI API key is invalid. Please check your API key and try again.")
-                    return
-                except Exception as e:
-                    st.error(f"An error occurred during test generation: {str(e)}")
-                    st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
-                    return
+                # Generate new tests
+                unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+                st.write("Debug: Test generation completed")
                 
+                # Store generated tests in session state
                 st.session_state.unit_tests = unit_tests
                 st.session_state.functional_tests = functional_tests
                 
+                # Display results
                 display_results(code_analysis, test_analysis, project_type)
                 
+                # Display generated tests
                 st.header("Generated Test Cases")
                 if unit_tests:
                     st.subheader("Unit Tests")
@@ -200,6 +171,7 @@ def test_add():
                 else:
                     st.warning("No functional tests were generated.")
                 
+                # Add download buttons for unit tests and functional tests
                 if st.session_state.unit_tests:
                     st.download_button(
                         label="Download Unit Tests",
@@ -215,6 +187,7 @@ def test_add():
                         mime="text/plain"
                     )
                 
+                # Display test quality suggestions
                 st.header("Suggestions for Improving Test Quality")
                 suggestions = get_test_quality_suggestions()
                 for i, suggestion in enumerate(suggestions, 1):
@@ -224,7 +197,7 @@ def test_add():
                 st.error(f"An error occurred during the analysis: {str(e)}")
                 st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
     else:
-        st.info("Please upload a file, enter a file path, or paste file content to begin analysis.")
+        st.info("Please enter a file path or paste file content to begin analysis.")
 
     st.sidebar.markdown("---")
     st.sidebar.info("This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases.")

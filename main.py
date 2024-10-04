@@ -94,16 +94,6 @@ def main():
     st.sidebar.header("Input Project Files")
     input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
 
-    # Default file content for testing
-    default_file_content = """
-def add(a, b):
-    return a + b
-
-def test_add():
-    assert add(2, 3) == 5
-    assert add(-1, 1) == 0
-    """
-
     file_content = None
 
     if input_type == "File Path":
@@ -117,38 +107,27 @@ def test_add():
             except IOError:
                 st.sidebar.error(f"Error reading file: {file_path}")
     else:
-        file_content = st.sidebar.text_area("Paste file content here", value=default_file_content)
+        file_content = st.sidebar.text_area("Paste file content here")
 
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
     use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
     
     analyze_button = st.sidebar.button("Analyze Project")
 
-    # Debug information
-    st.sidebar.write("Debug Info:")
-    st.sidebar.write(f"Input Type: {input_type}")
-    st.sidebar.write(f"File Content: {file_content[:50] if file_content else 'None'}...")
-    st.sidebar.write(f"Project Type: {project_type}")
-    st.sidebar.write(f"Analyze Button: {analyze_button}")
-
-    if file_content and (analyze_button or input_type == "File Content"):
+    if file_content and analyze_button:
         with st.spinner("Analyzing project..."):
             try:
                 # Process input
                 processed_files = process_upload(file_content)
-                st.write("Debug: Files processed successfully")
                 
                 # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
-                st.write("Debug: Code analysis completed")
                 
                 # Analyze existing tests
                 test_analysis = analyze_tests(processed_files, project_type)
-                st.write("Debug: Test analysis completed")
                 
                 # Generate new tests
                 unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
-                st.write("Debug: Test generation completed")
                 
                 # Store generated tests in session state
                 st.session_state.unit_tests = unit_tests
@@ -195,9 +174,8 @@ def test_add():
                 
             except Exception as e:
                 st.error(f"An error occurred during the analysis: {str(e)}")
-                st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
     else:
-        st.info("Please enter a file path or paste file content to begin analysis.")
+        st.info("Please enter a file path or paste file content and click 'Analyze Project' to begin analysis.")
 
     st.sidebar.markdown("---")
     st.sidebar.info("This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases.")

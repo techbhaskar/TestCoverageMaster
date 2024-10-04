@@ -1,9 +1,9 @@
-import coverage
+import re
 from typing import List, Dict
 
 def analyze_code(files: List[Dict], project_type: str) -> Dict:
     """
-    Analyze the code files and return code coverage information using actual unit tests.
+    Analyze the code files and return code coverage information.
     """
     coverage_data = {
         'total_lines': 0,
@@ -12,49 +12,51 @@ def analyze_code(files: List[Dict], project_type: str) -> Dict:
         'uncovered_functions': []
     }
 
-    # Create a coverage object
-    cov = coverage.Coverage()
-
-    # Start coverage measurement
-    cov.start()
-
-    # Run unit tests
-    test_files = [f for f in files if f['name'].startswith('test_') or f['name'].endswith('_test.py')]
-    for test_file in test_files:
-        exec(test_file['content'], globals())
-
-    # Stop coverage measurement
-    cov.stop()
-
-    # Analyze coverage data
-    total_lines = 0
-    covered_lines = 0
-
     for file in files:
-        if not file['name'].startswith('test_') and not file['name'].endswith('_test.py'):
-            file_content = file['content']
-            file_coverage = cov.analysis(file_content)
-            total_lines += len(file_coverage[1] + file_coverage[2])
-            covered_lines += len(file_coverage[1])
-            uncovered_lines = file_coverage[2]
-            
-            # Extract uncovered functions
-            content_lines = file_content.splitlines()
-            for i, line in enumerate(content_lines):
-                if 'def ' in line and i+1 in uncovered_lines:
-                    function_name = line.split('def ')[1].split('(')[0].strip()
-                    coverage_data['uncovered_functions'].append(function_name)
+        if project_type == "JavaScript":
+            file_coverage = analyze_javascript(file['content'])
+        elif project_type == "Angular":
+            file_coverage = analyze_angular(file['content'])
+        elif project_type == "React":
+            file_coverage = analyze_react(file['content'])
+        elif project_type == "Python":
+            file_coverage = analyze_python(file['content'])
+        elif project_type == "Java":
+            file_coverage = analyze_java(file['content'])
+        elif project_type == ".NET":
+            file_coverage = analyze_dotnet(file['content'])
+        else:
+            file_coverage = {'total_lines': 0, 'covered_lines': 0, 'uncovered_functions': []}
 
-    coverage_data['total_lines'] = total_lines
-    coverage_data['covered_lines'] = covered_lines
-    
-    if total_lines > 0:
-        coverage_data['coverage_percentage'] = (covered_lines / total_lines) * 100
+        coverage_data['total_lines'] += file_coverage['total_lines']
+        coverage_data['covered_lines'] += file_coverage['covered_lines']
+        coverage_data['uncovered_functions'].extend(file_coverage['uncovered_functions'])
 
-    # Generate HTML report
-    cov.html_report(directory='coverage_report')
+    if coverage_data['total_lines'] > 0:
+        coverage_data['coverage_percentage'] = (coverage_data['covered_lines'] / coverage_data['total_lines']) * 100
 
     return {'coverage': coverage_data}
 
-# Keep other functions (analyze_javascript, analyze_angular, etc.) as they are,
-# they might be useful for more detailed analysis in the future.
+def analyze_javascript(content: str) -> Dict:
+    # Implement JavaScript analysis logic
+    pass
+
+def analyze_angular(content: str) -> Dict:
+    # Implement Angular analysis logic
+    pass
+
+def analyze_react(content: str) -> Dict:
+    # Implement React analysis logic
+    pass
+
+def analyze_python(content: str) -> Dict:
+    # Implement Python analysis logic
+    pass
+
+def analyze_java(content: str) -> Dict:
+    # Implement Java analysis logic
+    pass
+
+def analyze_dotnet(content: str) -> Dict:
+    # Implement .NET analysis logic
+    pass

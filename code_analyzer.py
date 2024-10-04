@@ -33,7 +33,7 @@ def analyze_code(files: List[Dict], project_type: str) -> Dict:
     for file in files:
         if not file['name'].startswith('test_') and not file['name'].endswith('_test.py'):
             file_content = file['content']
-            file_coverage = cov.analysis(file['name'], file_content)
+            file_coverage = cov.analysis(file_content)
             total_lines += len(file_coverage[1] + file_coverage[2])
             covered_lines += len(file_coverage[1])
             uncovered_lines = file_coverage[2]

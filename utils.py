@@ -1,16 +1,16 @@
 from typing import List, Dict
 
-def process_upload(file_content: str) -> List[Dict]:
+def process_upload(file_contents: List[Dict]) -> List[Dict]:
     """
-    Process the input file content and return a list of dictionaries containing file information.
+    Process the input file contents and return a list of dictionaries containing file information.
     """
     processed_files = []
     
-    # Assuming the input is a single file content
-    processed_files.append({
-        'name': 'input_file',
-        'content': file_content
-    })
+    for file in file_contents:
+        processed_files.append({
+            'name': file['name'],
+            'content': file['content']
+        })
     
     return processed_files
 

@@ -6,9 +6,10 @@ from test_analyzer import analyze_tests
 from test_generator import generate_tests
 from visualization import display_coverage, display_test_quality, display_functional_coverage
 from utils import process_upload
+import glob
 
 # Add version number
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -100,6 +101,25 @@ def display_results(code_analysis, test_analysis, project_type, show_coverage_qu
         else:
             st.warning("Functional coverage analysis not available.")
 
+def scan_directory(directory_path, project_type):
+    """Recursively scan directory and return file contents."""
+    file_contents = []
+    extensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.cs']
+    
+    for ext in extensions:
+        for file_path in glob.glob(f"{directory_path}/**/*{ext}", recursive=True):
+            try:
+                with open(file_path, 'r') as file:
+                    content = file.read()
+                    file_contents.append({
+                        'name': os.path.relpath(file_path, directory_path),
+                        'content': content
+                    })
+            except Exception as e:
+                st.warning(f"Error reading file {file_path}: {str(e)}")
+    
+    return file_contents
+
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
@@ -113,22 +133,40 @@ def main():
     st.caption(f"Version: {__version__}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content"])
+    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content", "Directory"])
 
-    file_content = None
+    file_contents = []
 
     if input_type == "File Path":
         file_path = st.sidebar.text_input("Enter file path")
         if file_path:
             try:
                 with open(file_path, 'r') as file:
-                    file_content = file.read()
+                    file_contents = [{
+                        'name': os.path.basename(file_path),
+                        'content': file.read()
+                    }]
             except FileNotFoundError:
                 st.sidebar.error(f"File not found: {file_path}")
             except IOError:
                 st.sidebar.error(f"Error reading file: {file_path}")
-    else:
-        file_content = st.sidebar.text_area("Paste file content here")
+    elif input_type == "File Content":
+        content = st.sidebar.text_area("Paste file content here")
+        if content:
+            file_contents = [{
+                'name': 'pasted_content.txt',
+                'content': content
+            }]
+    else:  # Directory
+        directory_path = st.sidebar.text_input("Enter directory path")
+        if directory_path:
+            if os.path.isdir(directory_path):
+                project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
+                file_contents = scan_directory(directory_path, project_type)
+                if not file_contents:
+                    st.sidebar.warning("No relevant files found in the directory.")
+            else:
+                st.sidebar.error("Invalid directory path.")
 
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
     use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
@@ -139,11 +177,11 @@ def main():
     
     analyze_button = st.sidebar.button("Analyze Project")
 
-    if file_content and analyze_button:
+    if file_contents and analyze_button:
         with st.spinner("Analyzing project..."):
             try:
                 # Process input
-                processed_files = process_upload(file_content)
+                processed_files = process_upload(file_contents)
                 
                 # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
@@ -200,7 +238,7 @@ def main():
             except Exception as e:
                 st.error(f"An error occurred during the analysis: {str(e)}")
     else:
-        st.info("Please enter a file path or paste file content and click 'Analyze Project' to begin analysis.")
+        st.info("Please enter a file path, paste file content, or provide a directory path and click 'Analyze Project' to begin analysis.")
 
     st.sidebar.markdown("---")
     st.sidebar.info("This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases.")

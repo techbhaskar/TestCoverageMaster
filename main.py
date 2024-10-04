@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.2.0"
+__version__ = "1.1.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -124,20 +124,31 @@ def test_add():
     
     analyze_button = st.sidebar.button("Analyze Project")
 
+    # Debug information
+    st.sidebar.write("Debug Info:")
+    st.sidebar.write(f"Input Type: {input_type}")
+    st.sidebar.write(f"File Content: {file_content[:50] if file_content else 'None'}...")
+    st.sidebar.write(f"Project Type: {project_type}")
+    st.sidebar.write(f"Analyze Button: {analyze_button}")
+
     if file_content and (analyze_button or input_type == "File Content"):
         with st.spinner("Analyzing project..."):
             try:
                 # Process input
                 processed_files = process_upload(file_content)
+                st.write("Debug: Files processed successfully")
                 
                 # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
+                st.write("Debug: Code analysis completed")
                 
                 # Analyze existing tests
                 test_analysis = analyze_tests(processed_files, project_type)
+                st.write("Debug: Test analysis completed")
                 
                 # Generate new tests
                 unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+                st.write("Debug: Test generation completed")
                 
                 # Store generated tests in session state
                 st.session_state.unit_tests = unit_tests
@@ -184,6 +195,7 @@ def test_add():
                 
             except Exception as e:
                 st.error(f"An error occurred during the analysis: {str(e)}")
+                st.write(f"Debug: Error details - {type(e).__name__}: {str(e)}")
     else:
         st.info("Please enter a file path or paste file content to begin analysis.")
 

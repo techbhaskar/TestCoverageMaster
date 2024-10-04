@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -54,32 +54,51 @@ def display_results(code_analysis, test_analysis, project_type, show_coverage_qu
     
     if show_coverage_quality:
         if code_analysis and 'coverage' in code_analysis:
-            st.subheader("Code Coverage")
-            try:
-                display_coverage(code_analysis['coverage'])
-            except Exception as e:
-                st.error(f"Error displaying code coverage: {str(e)}")
+            coverage = code_analysis['coverage']
+            if coverage['total_lines'] > 0:
+                st.subheader("Code Coverage")
+                try:
+                    display_coverage(coverage)
+                    st.write(f"Total Lines: {coverage['total_lines']}")
+                    st.write(f"Covered Lines: {coverage['covered_lines']}")
+                    st.write(f"Coverage Percentage: {coverage['coverage_percentage']:.2f}%")
+                except Exception as e:
+                    st.error(f"Error displaying code coverage: {str(e)}")
+            else:
+                st.warning("No code coverage data available.")
         else:
-            st.warning("Code coverage data is not available.")
+            st.warning("Code coverage analysis not available.")
         
         if test_analysis and 'quality' in test_analysis:
-            st.subheader("Test Quality")
-            try:
-                display_test_quality(test_analysis['quality'])
-            except Exception as e:
-                st.error(f"Error displaying test quality: {str(e)}")
+            quality = test_analysis['quality']
+            if any(quality.values()):
+                st.subheader("Test Quality")
+                try:
+                    display_test_quality(quality)
+                    st.write(f"Total Tests: {quality['total_tests']}")
+                    st.write(f"Assertions: {quality['assertions']}")
+                    st.write(f"Mocks: {quality['mocks']}")
+                    st.write(f"Test Depth: {quality['test_depth']}")
+                except Exception as e:
+                    st.error(f"Error displaying test quality: {str(e)}")
+            else:
+                st.warning("No test quality data available.")
         else:
-            st.warning("Test quality data is not available.")
+            st.warning("Test quality analysis not available.")
     
     if show_functional_coverage:
         if test_analysis and 'functional_coverage' in test_analysis:
-            st.subheader("Functional Coverage")
-            try:
-                display_functional_coverage(test_analysis['functional_coverage'])
-            except Exception as e:
-                st.error(f"Error displaying functional coverage: {str(e)}")
+            functional_coverage = test_analysis['functional_coverage']
+            if functional_coverage['total_functions'] > 0:
+                st.subheader("Functional Coverage")
+                try:
+                    display_functional_coverage(functional_coverage)
+                except Exception as e:
+                    st.error(f"Error displaying functional coverage: {str(e)}")
+            else:
+                st.warning("No functional coverage data available.")
         else:
-            st.warning("Functional coverage data is not available.")
+            st.warning("Functional coverage analysis not available.")
 
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")

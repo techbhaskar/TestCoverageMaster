@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -192,6 +192,11 @@ def test_add():
                 suggestions = get_test_quality_suggestions()
                 for i, suggestion in enumerate(suggestions, 1):
                     st.write(f"{i}. {suggestion}")
+                
+                # Display link to coverage report
+                if os.path.exists('coverage_report/index.html'):
+                    st.header("Code Coverage Report")
+                    st.markdown("Click [here](coverage_report/index.html) to view the detailed code coverage report.")
                 
             except Exception as e:
                 st.error(f"An error occurred during the analysis: {str(e)}")

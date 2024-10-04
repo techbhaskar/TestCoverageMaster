@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -49,26 +49,27 @@ def get_test_quality_suggestions():
     ]
     return suggestions
 
-def display_results(code_analysis, test_analysis, project_type):
+def display_results(code_analysis, test_analysis, project_type, show_coverage_quality):
     st.header("Analysis Results")
     
-    if code_analysis and 'coverage' in code_analysis:
-        st.subheader("Code Coverage")
-        try:
-            display_coverage(code_analysis['coverage'])
-        except Exception as e:
-            st.error(f"Error displaying code coverage: {str(e)}")
-    else:
-        st.warning("Code coverage data is not available.")
-    
-    if test_analysis and 'quality' in test_analysis:
-        st.subheader("Test Quality")
-        try:
-            display_test_quality(test_analysis['quality'])
-        except Exception as e:
-            st.error(f"Error displaying test quality: {str(e)}")
-    else:
-        st.warning("Test quality data is not available.")
+    if show_coverage_quality:
+        if code_analysis and 'coverage' in code_analysis:
+            st.subheader("Code Coverage")
+            try:
+                display_coverage(code_analysis['coverage'])
+            except Exception as e:
+                st.error(f"Error displaying code coverage: {str(e)}")
+        else:
+            st.warning("Code coverage data is not available.")
+        
+        if test_analysis and 'quality' in test_analysis:
+            st.subheader("Test Quality")
+            try:
+                display_test_quality(test_analysis['quality'])
+            except Exception as e:
+                st.error(f"Error displaying test quality: {str(e)}")
+        else:
+            st.warning("Test quality data is not available.")
     
     if test_analysis and 'functional_coverage' in test_analysis:
         st.subheader("Functional Coverage")
@@ -112,6 +113,9 @@ def main():
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
     use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
     
+    # Add checkbox for toggling Code Coverage and Test Quality sections
+    show_coverage_quality = st.sidebar.checkbox("Show Code Coverage and Test Quality", value=False)
+    
     analyze_button = st.sidebar.button("Analyze Project")
 
     if file_content and analyze_button:
@@ -134,7 +138,7 @@ def main():
                 st.session_state.functional_tests = functional_tests
                 
                 # Display results
-                display_results(code_analysis, test_analysis, project_type)
+                display_results(code_analysis, test_analysis, project_type, show_coverage_quality)
                 
                 # Display generated tests
                 st.header("Generated Test Cases")

@@ -30,23 +30,23 @@ def add_numbers(a: int, b: int) -> int:
     return a + b
 
 def get_test_quality_suggestions():
-    """Provide suggestions for improving test quality based on best practices."""
+    """Provide suggestions for improving test quality based on best practices with specific examples and real-world scenarios."""
     suggestions = [
-        "Improve test coverage by adding more test cases, especially for edge cases and different scenarios.",
-        "Implement parameterized tests to test multiple inputs efficiently.",
-        "Use setup and teardown methods for better test organization and resource management.",
-        "Group related tests into test classes for better structure and readability.",
-        "Utilize mocking to isolate units of code and test them independently.",
-        "Add integration tests to verify the interaction between different components.",
-        "Adopt test-driven development (TDD) by writing tests before implementing new features.",
-        "Use specific assertions to check expected outcomes more accurately.",
-        "Implement continuous integration to run tests automatically on each code change.",
-        "Regularly review and refactor tests to maintain their quality and relevance.",
-        "Use code coverage tools to identify areas of the codebase that lack test coverage.",
-        "Write both positive and negative test cases to ensure proper error handling.",
-        "Keep tests independent and avoid dependencies between test cases.",
-        "Use meaningful test names that describe the behavior being tested.",
-        "Implement performance tests for critical parts of the application."
+        "Improve test coverage by adding more test cases, especially for edge cases and different scenarios. For example, if you have a function that processes user input, test it with valid input, empty input, extremely long input, and input containing special characters.",
+        "Implement parameterized tests to test multiple inputs efficiently. For instance, use @pytest.mark.parametrize in Python to test a sorting function with various input lists: sorted, reverse sorted, empty, and lists with duplicate elements.",
+        "Use setup and teardown methods for better test organization and resource management. In a real-world scenario, you might use setUp() to create a test database connection and tearDown() to close it, ensuring each test starts with a clean slate.",
+        "Group related tests into test classes for better structure and readability. For example, create separate test classes for UserAuthentication, OrderProcessing, and PaymentGateway in an e-commerce application.",
+        "Utilize mocking to isolate units of code and test them independently. In a weather app, you could mock the API call to a weather service to test how your app handles different weather conditions without making actual API requests.",
+        "Add integration tests to verify the interaction between different components. For instance, test the entire user registration process in a web application, from form submission to database entry creation and email notification.",
+        "Adopt test-driven development (TDD) by writing tests before implementing new features. When adding a new 'forgot password' feature, write tests for successful password reset, invalid token handling, and email sending before implementing the feature.",
+        "Use specific assertions to check expected outcomes more accurately. Instead of using assertEqual(True, user.is_active), use assertTrue(user.is_active) for better readability and more informative error messages.",
+        "Implement continuous integration to run tests automatically on each code change. Set up a CI/CD pipeline using tools like Jenkins or GitHub Actions to run your test suite on every push to the repository.",
+        "Regularly review and refactor tests to maintain their quality and relevance. As your codebase evolves, some tests may become obsolete or redundant. Schedule monthly test code reviews to keep your test suite efficient and up-to-date.",
+        "Use code coverage tools to identify areas of the codebase that lack test coverage. Tools like coverage.py for Python or Istanbul for JavaScript can help you visualize which parts of your code are not covered by tests.",
+        "Write both positive and negative test cases to ensure proper error handling. For a user registration function, test both successful registration with valid data and failed registration attempts with invalid email formats or weak passwords.",
+        "Keep tests independent and avoid dependencies between test cases. Each test should be able to run in isolation. For example, don't rely on the state created by one test for another test to function correctly.",
+        "Use meaningful test names that describe the behavior being tested. Instead of test_login(), use test_login_with_valid_credentials_succeeds() or test_login_with_invalid_password_fails() to clearly indicate the test's purpose.",
+        "Implement performance tests for critical parts of the application. For an e-commerce site, create tests to ensure the product search function returns results within acceptable time limits, even with a large product database."
     ]
     return suggestions
 

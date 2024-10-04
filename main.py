@@ -133,12 +133,12 @@ def main():
     st.caption(f"Version: {__version__}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content", "Directory"])
+    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content", "Directory"], key="input_type_radio")
 
     file_contents = []
 
     if input_type == "File Path":
-        file_path = st.sidebar.text_input("Enter file path")
+        file_path = st.sidebar.text_input("Enter file path", key="file_path_input")
         if file_path:
             try:
                 with open(file_path, 'r') as file:
@@ -151,29 +151,29 @@ def main():
             except IOError:
                 st.sidebar.error(f"Error reading file: {file_path}")
     elif input_type == "File Content":
-        content = st.sidebar.text_area("Paste file content here")
+        content = st.sidebar.text_area("Paste file content here", key="file_content_input")
         if content:
             file_contents = [{
                 'name': 'pasted_content.txt',
                 'content': content
             }]
     else:  # Directory
-        directory_path = st.sidebar.text_input("Enter directory path")
+        directory_path = st.sidebar.text_input("Enter directory path", key="directory_path_input")
         if directory_path:
             if os.path.isdir(directory_path):
-                project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
+                project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"], key="project_type_directory")
                 file_contents = scan_directory(directory_path, project_type)
                 if not file_contents:
                     st.sidebar.warning("No relevant files found in the directory.")
             else:
                 st.sidebar.error("Invalid directory path.")
 
-    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
-    use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
+    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"], key="project_type_main")
+    use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True, key="use_ai_checkbox")
     
     # Add checkboxes for toggling different sections
-    show_coverage_quality = st.sidebar.checkbox("Show Code Coverage and Test Quality", value=False)
-    show_functional_coverage = st.sidebar.checkbox("Show Functional Coverage", value=False)
+    show_coverage_quality = st.sidebar.checkbox("Show Code Coverage and Test Quality", value=False, key="show_coverage_quality_checkbox")
+    show_functional_coverage = st.sidebar.checkbox("Show Functional Coverage", value=False, key="show_functional_coverage_checkbox")
     
     analyze_button = st.sidebar.button("Analyze Project")
 
@@ -219,14 +219,16 @@ def main():
                         label="Download Unit Tests",
                         data=st.session_state.unit_tests,
                         file_name=f"generated_unit_tests.{get_file_extension(project_type)}",
-                        mime="text/plain"
+                        mime="text/plain",
+                        key="download_unit_tests_button"
                     )
                 if st.session_state.functional_tests:
                     st.download_button(
                         label="Download Functional Tests",
                         data=st.session_state.functional_tests,
                         file_name=f"generated_functional_tests.{get_file_extension(project_type)}",
-                        mime="text/plain"
+                        mime="text/plain",
+                        key="download_functional_tests_button"
                     )
                 
                 # Display test quality suggestions

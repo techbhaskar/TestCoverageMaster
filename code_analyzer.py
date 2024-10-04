@@ -1,6 +1,5 @@
 import coverage
-import os
-import subprocess
+import io
 from typing import List, Dict
 
 def analyze_code(files: List[Dict], project_type: str) -> Dict:
@@ -21,35 +20,31 @@ def analyze_code(files: List[Dict], project_type: str) -> Dict:
     cov.start()
 
     # Run unit tests
-    test_files = [f['name'] for f in files if f['name'].startswith('test_') or f['name'].endswith('_test.py')]
+    test_files = [f for f in files if f['name'].startswith('test_') or f['name'].endswith('_test.py')]
     for test_file in test_files:
-        subprocess.run(['python', '-m', 'unittest', test_file], capture_output=True)
+        exec(test_file['content'], globals())
 
     # Stop coverage measurement
     cov.stop()
 
-    # Save coverage results
-    cov.save()
-
     # Analyze coverage data
-    cov.load()
     total_lines = 0
     covered_lines = 0
 
     for file in files:
         if not file['name'].startswith('test_') and not file['name'].endswith('_test.py'):
-            file_coverage = cov.analysis(file['name'])
+            file_content = io.StringIO(file['content'])
+            file_coverage = cov.analysis(file_content)
             total_lines += len(file_coverage[1] + file_coverage[2])
             covered_lines += len(file_coverage[1])
             uncovered_lines = file_coverage[2]
             
             # Extract uncovered functions
-            with open(file['name'], 'r') as f:
-                content = f.readlines()
-                for i, line in enumerate(content):
-                    if 'def ' in line and i+1 in uncovered_lines:
-                        function_name = line.split('def ')[1].split('(')[0].strip()
-                        coverage_data['uncovered_functions'].append(function_name)
+            content_lines = file['content'].splitlines()
+            for i, line in enumerate(content_lines):
+                if 'def ' in line and i+1 in uncovered_lines:
+                    function_name = line.split('def ')[1].split('(')[0].strip()
+                    coverage_data['uncovered_functions'].append(function_name)
 
     coverage_data['total_lines'] = total_lines
     coverage_data['covered_lines'] = covered_lines

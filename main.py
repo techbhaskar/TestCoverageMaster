@@ -8,7 +8,7 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 
 # Add version number
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
@@ -49,7 +49,7 @@ def get_test_quality_suggestions():
     ]
     return suggestions
 
-def display_results(code_analysis, test_analysis, project_type, show_coverage_quality):
+def display_results(code_analysis, test_analysis, project_type, show_coverage_quality, show_functional_coverage):
     st.header("Analysis Results")
     
     if show_coverage_quality:
@@ -71,14 +71,15 @@ def display_results(code_analysis, test_analysis, project_type, show_coverage_qu
         else:
             st.warning("Test quality data is not available.")
     
-    if test_analysis and 'functional_coverage' in test_analysis:
-        st.subheader("Functional Coverage")
-        try:
-            display_functional_coverage(test_analysis['functional_coverage'])
-        except Exception as e:
-            st.error(f"Error displaying functional coverage: {str(e)}")
-    else:
-        st.warning("Functional coverage data is not available.")
+    if show_functional_coverage:
+        if test_analysis and 'functional_coverage' in test_analysis:
+            st.subheader("Functional Coverage")
+            try:
+                display_functional_coverage(test_analysis['functional_coverage'])
+            except Exception as e:
+                st.error(f"Error displaying functional coverage: {str(e)}")
+        else:
+            st.warning("Functional coverage data is not available.")
 
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
@@ -113,8 +114,9 @@ def main():
     project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
     use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True)
     
-    # Add checkbox for toggling Code Coverage and Test Quality sections
+    # Add checkboxes for toggling different sections
     show_coverage_quality = st.sidebar.checkbox("Show Code Coverage and Test Quality", value=False)
+    show_functional_coverage = st.sidebar.checkbox("Show Functional Coverage", value=False)
     
     analyze_button = st.sidebar.button("Analyze Project")
 
@@ -138,7 +140,7 @@ def main():
                 st.session_state.functional_tests = functional_tests
                 
                 # Display results
-                display_results(code_analysis, test_analysis, project_type, show_coverage_quality)
+                display_results(code_analysis, test_analysis, project_type, show_coverage_quality, show_functional_coverage)
                 
                 # Display generated tests
                 st.header("Generated Test Cases")

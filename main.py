@@ -10,6 +10,7 @@ import glob
 
 __version__ = "1.0.0"
 
+
 def get_file_extension(project_type):
     extensions = {
         "JavaScript": "js",
@@ -21,9 +22,11 @@ def get_file_extension(project_type):
     }
     return extensions.get(project_type, "txt")
 
+
 def add_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     return a + b
+
 
 def get_test_quality_suggestions():
     """Provide suggestions for improving test quality based on best practices with specific examples and real-world scenarios."""
@@ -124,6 +127,7 @@ def scan_directory(directory_path, project_type):
 
     return file_contents
 
+
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
@@ -145,14 +149,16 @@ def main():
                 @apply border-gray-300 focus:ring-blue-500 focus:border-blue-500;
             }
         </style>
-    """, unsafe_allow_html=True)
+    """,
+                unsafe_allow_html=True)
 
     st.markdown("""
-        <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
-            <h1 class="text-4xl font-bold text-gray-800">Comprehensive Unit Test Analyzer</h1>
-            <p class="text-sm text-gray-600">Version: {}</p>
+        <div class="bg-white shadow-lg rounded-lg mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 pl-4">Comprehensive Unit Test Analyzer</h1>
+            <p class="text-sm text-gray-600 pl-1">Version: {}</p>
         </div>
-    """.format(__version__), unsafe_allow_html=True)
+    """.format(__version__),
+                unsafe_allow_html=True)
 
     if 'unit_tests' not in st.session_state:
         st.session_state.unit_tests = None
@@ -160,22 +166,23 @@ def main():
         st.session_state.functional_tests = None
 
     st.sidebar.markdown("""
-        <div class="bg-gray-50 p-4 rounded-lg shadow">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Input Project Files</h2>
+        <div class="bg-gray-50 rounded-lg shadow">
+            <h2 class="font-semibold mb-4 p-2 text-gray-700 text-xl">Input Project Files</h2>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+                        unsafe_allow_html=True)
 
-    input_type = st.sidebar.radio(
-        "Select input type",
-        ["File Path", "File Content", "Project Directory", "Multiple Files Input"]
-    )
+    input_type = st.sidebar.radio("Select input type", [
+        "File Path", "File Content", "Project Directory",
+        "Multiple Files Input"
+    ])
 
     file_contents = []
 
     if input_type == "File Path":
         file_path = st.sidebar.text_input("Enter file path",
-                                        help="Enter the path to your file",
-                                        key="file_path_input")
+                                          help="Enter the path to your file",
+                                          key="file_path_input")
         if file_path:
             try:
                 with open(file_path, 'r') as file:
@@ -190,9 +197,9 @@ def main():
 
     elif input_type == "File Content":
         content = st.sidebar.text_area("Paste file content here",
-                                     height=300,
-                                     help="Paste your code here",
-                                     key="file_content_input")
+                                       height=300,
+                                       help="Paste your code here",
+                                       key="file_content_input")
         if content:
             file_contents = [{
                 'name': 'content.txt',
@@ -241,14 +248,12 @@ def main():
             else:
                 st.sidebar.error("Invalid directory path.")
 
-
     project_type = st.sidebar.selectbox(
         "Select Project Type",
-        ["JavaScript", "Angular", "React", "Python", "Java", ".NET"]
-    )
+        ["JavaScript", "Angular", "React", "Python", "Java", ".NET"])
 
-    analyze_button = st.sidebar.button("Analyze Project", 
-                                     help="Click to start analysis")
+    analyze_button = st.sidebar.button("Analyze Project",
+                                       help="Click to start analysis")
 
     if file_contents and analyze_button:
         with st.spinner("🔄 Analyzing project..."):
@@ -263,33 +268,33 @@ def main():
                 st.session_state.functional_tests = functional_tests
 
                 st.markdown("""
-                    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+                    <div class="bg-white  rounded-lg shadow-lg mb-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-4">Analysis Results</h2>
                     </div>
-                """, unsafe_allow_html=True)
+                """,
+                            unsafe_allow_html=True)
 
-                display_results(code_analysis, test_analysis, project_type, True, True)
-
+                display_results(code_analysis, test_analysis, project_type,
+                                True, True)
 
                 st.markdown("""
-                    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+                    <div class="bg-white rounded-lg shadow-lg mb-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-4">Generated Test Cases</h2>
                     </div>
-                """, unsafe_allow_html=True)
+                """,
+                            unsafe_allow_html=True)
 
                 if unit_tests:
                     st.code(unit_tests)
                     st.download_button(
-                        "📥 Download Unit Tests",
-                        unit_tests,
+                        "📥 Download Unit Tests", unit_tests,
                         f"generated_unit_tests.{get_file_extension(project_type)}"
                     )
 
                 if functional_tests:
                     st.code(functional_tests)
                     st.download_button(
-                        "📥 Download Functional Tests",
-                        functional_tests,
+                        "📥 Download Functional Tests", functional_tests,
                         f"generated_functional_tests.{get_file_extension(project_type)}"
                     )
 
@@ -305,7 +310,9 @@ def main():
                 for unit test coverage and quality, and generates new test cases.
             </p>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+                        unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()

@@ -11,7 +11,6 @@ import glob
 # Add version number
 __version__ = "1.5.0"
 
-
 def get_file_extension(project_type):
     if project_type in ["JavaScript", "React"]:
         return "js"
@@ -26,11 +25,9 @@ def get_file_extension(project_type):
     else:
         return "txt"
 
-
 def add_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     return a + b
-
 
 def get_test_quality_suggestions():
     """Provide suggestions for improving test quality based on best practices with specific examples and real-world scenarios."""
@@ -53,11 +50,9 @@ def get_test_quality_suggestions():
     ]
     return suggestions
 
-
-def display_results(code_analysis, test_analysis, project_type,
-                    show_coverage_quality, show_functional_coverage):
+def display_results(code_analysis, test_analysis, project_type, show_coverage_quality, show_functional_coverage):
     st.header("Analysis Results")
-
+    
     if show_coverage_quality:
         if code_analysis and 'coverage' in code_analysis:
             coverage = code_analysis['coverage']
@@ -67,16 +62,14 @@ def display_results(code_analysis, test_analysis, project_type,
                     display_coverage(coverage)
                     st.write(f"Total Lines: {coverage['total_lines']}")
                     st.write(f"Covered Lines: {coverage['covered_lines']}")
-                    st.write(
-                        f"Coverage Percentage: {coverage['coverage_percentage']:.2f}%"
-                    )
+                    st.write(f"Coverage Percentage: {coverage['coverage_percentage']:.2f}%")
                 except Exception as e:
                     st.error(f"Error displaying code coverage: {str(e)}")
             else:
                 st.warning("No code coverage data available.")
         else:
             st.warning("Code coverage analysis not available.")
-
+        
         if test_analysis and 'quality' in test_analysis:
             quality = test_analysis['quality']
             if any(quality.values()):
@@ -93,7 +86,7 @@ def display_results(code_analysis, test_analysis, project_type,
                 st.warning("No test quality data available.")
         else:
             st.warning("Test quality analysis not available.")
-
+    
     if show_functional_coverage:
         if test_analysis and 'functional_coverage' in test_analysis:
             functional_coverage = test_analysis['functional_coverage']
@@ -108,29 +101,24 @@ def display_results(code_analysis, test_analysis, project_type,
         else:
             st.warning("Functional coverage analysis not available.")
 
-
 def scan_directory(directory_path, project_type):
     """Recursively scan directory and return file contents."""
     file_contents = []
     extensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.cs']
-
+    
     for ext in extensions:
-        for file_path in glob.glob(f"{directory_path}/**/*{ext}",
-                                   recursive=True):
+        for file_path in glob.glob(f"{directory_path}/**/*{ext}", recursive=True):
             try:
                 with open(file_path, 'r') as file:
                     content = file.read()
                     file_contents.append({
-                        'name':
-                        os.path.relpath(file_path, directory_path),
-                        'content':
-                        content
+                        'name': os.path.relpath(file_path, directory_path),
+                        'content': content
                     })
             except Exception as e:
                 st.warning(f"Error reading file {file_path}: {str(e)}")
-
+    
     return file_contents
-
 
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
@@ -145,50 +133,15 @@ def main():
     st.caption(f"Version: {__version__}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", [
-        "File Path", "File Content", "Project Directory",
-        "Multiple Files Input"
-    ],
-                                  key="input_type_radio")
+    input_type = st.sidebar.radio("Select input type", ["Project Directory", "Multiple Files Input"], key="input_type_radio")
 
     file_contents = []
-    if input_type == "File Path":
-        file_path = st.sidebar.text_input("Enter file path",
-                                          key="file_path_input")
-        if file_path:
-            try:
-                with open(file_path, 'r') as file:
-                    file_contents = [{
-                        'name': os.path.basename(file_path),
-                        'content': file.read()
-                    }]
-            except FileNotFoundError:
-                st.sidebar.error(f"File not found: {file_path}")
-            except IOError:
-                st.sidebar.error(f"Error reading file: {file_path}")
-    elif input_type == "File Content":
-        content = st.sidebar.text_area("Paste file content here (include function definitions)", height=300, key="file_content_input", help="Paste your code content here. Make sure to include complete function definitions.")
-        if content:
-            extension = get_file_extension(project_type)
-            file_contents = [{
-                'name': f'content.{extension}',
-                'content': content.strip()
-            }]
 
-            # Add a mock test file to help with analysis
-            test_extension = 'test.' + extension if project_type in ['JavaScript', 'React'] else f'_test.{extension}'
-            file_contents.append({
-                'name': f'content.{test_extension}',
-                'content': f'// Test file for analysis\n{content.strip()}'
-            })
-    elif input_type == "Multiple Files Input":
+    if input_type == "Multiple Files Input":
         st.sidebar.markdown("### Paste Multiple Files")
-        st.sidebar.markdown(
-            "Format: ```\nFilename: example.js\n[Content here]\n---```")
-        content = st.sidebar.text_area("Paste files here",
-                                       height=300,
-                                       key="multi_file_content_input")
-
+        st.sidebar.markdown("Format: ```\nFilename: example.js\n[Content here]\n---```")
+        content = st.sidebar.text_area("Paste files here", height=300, key="multi_file_content_input")
+        
         if content:
             files = content.split('---')
             for file_block in files:
@@ -197,8 +150,7 @@ def main():
                 try:
                     file_lines = file_block.strip().split('\n')
                     if file_lines[0].startswith('Filename:'):
-                        filename = file_lines[0].replace('Filename:',
-                                                         '').strip()
+                        filename = file_lines[0].replace('Filename:', '').strip()
                         file_content = '\n'.join(file_lines[1:])
                         file_contents.append({
                             'name': filename,
@@ -207,41 +159,23 @@ def main():
                 except Exception as e:
                     st.sidebar.error(f"Error parsing file block: {str(e)}")
     else:  # Project Directory
-        directory_path = st.sidebar.text_input("Enter directory path",
-                                               key="directory_path_input")
+        directory_path = st.sidebar.text_input("Enter directory path", key="directory_path_input")
         if directory_path:
             if os.path.isdir(directory_path):
-                project_type = st.sidebar.selectbox(
-                    "Select Project Type", [
-                        "JavaScript", "Angular", "React", "Python", "Java",
-                        ".NET"
-                    ],
-                    key="project_type_directory")
+                project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"], key="project_type_directory")
                 file_contents = scan_directory(directory_path, project_type)
                 if not file_contents:
-                    st.sidebar.warning(
-                        "No relevant files found in the directory.")
+                    st.sidebar.warning("No relevant files found in the directory.")
             else:
                 st.sidebar.error("Invalid directory path.")
 
-    project_type = st.sidebar.selectbox(
-        "Select Project Type",
-        ["JavaScript", "Angular", "React", "Python", "Java", ".NET"],
-        key="project_type_main")
-    use_ai = st.sidebar.checkbox("Use AI-powered test generation",
-                                 value=True,
-                                 key="use_ai_checkbox")
-
+    project_type = st.sidebar.selectbox("Select Project Type", ["JavaScript", "Angular", "React", "Python", "Java", ".NET"], key="project_type_main")
+    use_ai = st.sidebar.checkbox("Use AI-powered test generation", value=True, key="use_ai_checkbox")
+    
     # Add checkboxes for toggling different sections
-    show_coverage_quality = st.sidebar.checkbox(
-        "Show Code Coverage and Test Quality",
-        value=False,
-        key="show_coverage_quality_checkbox")
-    show_functional_coverage = st.sidebar.checkbox(
-        "Show Functional Coverage",
-        value=False,
-        key="show_functional_coverage_checkbox")
-
+    show_coverage_quality = st.sidebar.checkbox("Show Code Coverage and Test Quality", value=False, key="show_coverage_quality_checkbox")
+    show_functional_coverage = st.sidebar.checkbox("Show Functional Coverage", value=False, key="show_functional_coverage_checkbox")
+    
     analyze_button = st.sidebar.button("Analyze Project")
 
     if file_contents and analyze_button:
@@ -249,26 +183,23 @@ def main():
             try:
                 # Process input
                 processed_files = process_upload(file_contents)
-
+                
                 # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
-
+                
                 # Analyze existing tests
                 test_analysis = analyze_tests(processed_files, project_type)
-
+                
                 # Generate new tests
-                unit_tests, functional_tests = generate_tests(
-                    code_analysis, test_analysis, project_type)
-
+                unit_tests, functional_tests = generate_tests(code_analysis, test_analysis, project_type)
+                
                 # Store generated tests in session state
                 st.session_state.unit_tests = unit_tests
                 st.session_state.functional_tests = functional_tests
-
+                
                 # Display results
-                display_results(code_analysis, test_analysis, project_type,
-                                show_coverage_quality,
-                                show_functional_coverage)
-
+                display_results(code_analysis, test_analysis, project_type, show_coverage_quality, show_functional_coverage)
+                
                 # Display generated tests
                 st.header("Generated Test Cases")
                 if unit_tests:
@@ -276,49 +207,44 @@ def main():
                     st.code(unit_tests)
                 else:
                     st.warning("No unit tests were generated.")
-
+                
                 if functional_tests:
                     st.subheader("Functional Tests")
                     st.code(functional_tests)
                 else:
                     st.warning("No functional tests were generated.")
-
+                
                 # Add download buttons for unit tests and functional tests
                 if st.session_state.unit_tests:
                     st.download_button(
                         label="Download Unit Tests",
                         data=st.session_state.unit_tests,
-                        file_name=
-                        f"generated_unit_tests.{get_file_extension(project_type)}",
+                        file_name=f"generated_unit_tests.{get_file_extension(project_type)}",
                         mime="text/plain",
-                        key="download_unit_tests_button")
+                        key="download_unit_tests_button"
+                    )
                 if st.session_state.functional_tests:
                     st.download_button(
                         label="Download Functional Tests",
                         data=st.session_state.functional_tests,
-                        file_name=
-                        f"generated_functional_tests.{get_file_extension(project_type)}",
+                        file_name=f"generated_functional_tests.{get_file_extension(project_type)}",
                         mime="text/plain",
-                        key="download_functional_tests_button")
-
+                        key="download_functional_tests_button"
+                    )
+                
                 # Display test quality suggestions
                 st.header("Suggestions for Improving Test Quality")
                 suggestions = get_test_quality_suggestions()
                 for i, suggestion in enumerate(suggestions, 1):
                     st.write(f"{i}. {suggestion}")
-
+                
             except Exception as e:
                 st.error(f"An error occurred during the analysis: {str(e)}")
     else:
-        st.info(
-            "Please enter a file path, paste file content, or provide a directory path and click 'Analyze Project' to begin analysis."
-        )
+        st.info("Please enter a file path, paste file content, or provide a directory path and click 'Analyze Project' to begin analysis.")
 
     st.sidebar.markdown("---")
-    st.sidebar.info(
-        "This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases."
-    )
-
+    st.sidebar.info("This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases.")
 
 if __name__ == "__main__":
     main()

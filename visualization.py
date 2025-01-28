@@ -18,31 +18,32 @@ def display_coverage(coverage: Dict):
             title={'text': "Code Coverage"},
             gauge={
                 'axis': {
-                    'range': [None, 100]
+                    'range': [None, 100],
+                    'tickwidth': 1,
+                    'tickcolor': "darkblue"
                 },
-                'bar': {
-                    'color':
-                    "#00008B"  # Using a hex color code for better clarity
-                },
-                'steps': [{
-                    'range': [0, 50],
-                    'color': "red"
-                }, {
-                    'range': [50, 75],
-                    'color': "yellow"
-                }, {
-                    'range': [75, 100],
-                    'color': "green"
-                }],
+                'bar': {'color': "royalblue"},
+                'steps': [
+                    {'range': [0, 30], 'color': "#FF4136"},  # Critical - Red
+                    {'range': [30, 50], 'color': "#FF851B"},  # Warning - Orange
+                    {'range': [50, 70], 'color': "#FFDC00"},  # Caution - Yellow
+                    {'range': [70, 85], 'color': "#2ECC40"},  # Good - Light Green
+                    {'range': [85, 100], 'color': "#01FF70"}  # Excellent - Bright Green
+                ],
                 'threshold': {
-                    'line': {
-                        'color': "red",
-                        'width': 4
-                    },
+                    'line': {'color': "black", 'width': 3},
                     'thickness': 0.75,
                     'value': 90
                 }
-            }))
+            }
+        ))
+    
+    # Update layout for better appearance
+    fig.update_layout(
+        font={'color': "darkblue", 'family': "Arial"},
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10)
+    )
 
     st.plotly_chart(fig)
 

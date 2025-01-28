@@ -9,7 +9,7 @@ from utils import process_upload
 import glob
 
 # Add version number
-__version__ = "1.5.0"
+__version__ = "1.0.0"
 
 
 def get_file_extension(project_type):

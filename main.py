@@ -167,13 +167,20 @@ def main():
             except IOError:
                 st.sidebar.error(f"Error reading file: {file_path}")
     elif input_type == "File Content":
-        content = st.sidebar.text_area("Paste file content here",
-                                       key="file_content_input")
+        content = st.sidebar.text_area("Paste file content here (include function definitions)", height=300, key="file_content_input", help="Paste your code content here. Make sure to include complete function definitions.")
         if content:
+            extension = get_file_extension(project_type)
             file_contents = [{
-                'name': 'pasted_content.txt',
-                'content': content
+                'name': f'content.{extension}',
+                'content': content.strip()
             }]
+
+            # Add a mock test file to help with analysis
+            test_extension = 'test.' + extension if project_type in ['JavaScript', 'React'] else f'_test.{extension}'
+            file_contents.append({
+                'name': f'content.{test_extension}',
+                'content': f'// Test file for analysis\n{content.strip()}'
+            })
     elif input_type == "Multiple Files Input":
         st.sidebar.markdown("### Paste Multiple Files")
         st.sidebar.markdown(

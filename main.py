@@ -8,29 +8,22 @@ from visualization import display_coverage, display_test_quality, display_functi
 from utils import process_upload
 import glob
 
-# Add version number
 __version__ = "1.0.0"
 
-
 def get_file_extension(project_type):
-    if project_type in ["JavaScript", "React"]:
-        return "js"
-    elif project_type == "Angular":
-        return "ts"
-    elif project_type == "Python":
-        return "py"
-    elif project_type == "Java":
-        return "java"
-    elif project_type == ".NET":
-        return "cs"
-    else:
-        return "txt"
-
+    extensions = {
+        "JavaScript": "js",
+        "React": "js",
+        "Angular": "ts",
+        "Python": "py",
+        "Java": "java",
+        ".NET": "cs"
+    }
+    return extensions.get(project_type, "txt")
 
 def add_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     return a + b
-
 
 def get_test_quality_suggestions():
     """Provide suggestions for improving test quality based on best practices with specific examples and real-world scenarios."""
@@ -131,31 +124,58 @@ def scan_directory(directory_path, project_type):
 
     return file_contents
 
-
 def main():
     st.set_page_config(page_title="Unit Test Analyzer", layout="wide")
 
-    # Initialize session state for storing generated tests
+    # Custom CSS with Tailwind classes
+    st.markdown("""
+        <style>
+            @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+
+            .main {
+                @apply bg-gray-50;
+            }
+            .stButton>button {
+                @apply bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded;
+            }
+            .stTextInput>div>div>input {
+                @apply border-gray-300 focus:ring-blue-500 focus:border-blue-500;
+            }
+            .stSelectbox>div>div>select {
+                @apply border-gray-300 focus:ring-blue-500 focus:border-blue-500;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Comprehensive Unit Test Analyzer</h1>
+            <p class="text-sm text-gray-600">Version: {}</p>
+        </div>
+    """.format(__version__), unsafe_allow_html=True)
+
     if 'unit_tests' not in st.session_state:
         st.session_state.unit_tests = None
     if 'functional_tests' not in st.session_state:
         st.session_state.functional_tests = None
 
-    st.title("Comprehensive Unit Test Analyzer")
-    st.caption(f"Version: {__version__}")
+    st.sidebar.markdown("""
+        <div class="bg-gray-50 p-4 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Input Project Files</h2>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", [
-        "File Path", "File Content", "Project Directory",
-        "Multiple Files Input"
-    ],
-                                  key="input_type_radio")
+    input_type = st.sidebar.radio(
+        "Select input type",
+        ["File Path", "File Content", "Project Directory", "Multiple Files Input"]
+    )
 
     file_contents = []
 
     if input_type == "File Path":
         file_path = st.sidebar.text_input("Enter file path",
-                                          key="file_path_input")
+                                        help="Enter the path to your file",
+                                        key="file_path_input")
         if file_path:
             try:
                 with open(file_path, 'r') as file:
@@ -164,18 +184,20 @@ def main():
                         'content': file.read()
                     }]
             except FileNotFoundError:
-                st.sidebar.error(f"File not found: {file_path}")
+                st.sidebar.error("❌ File not found")
             except IOError:
-                st.sidebar.error(f"Error reading file: {file_path}")
+                st.sidebar.error("❌ Error reading file")
+
     elif input_type == "File Content":
         content = st.sidebar.text_area("Paste file content here",
-                                       key="file_content_input")
+                                     height=300,
+                                     help="Paste your code here",
+                                     key="file_content_input")
         if content:
             file_contents = [{
-                'name': 'pasted_content.txt',
-                'content': content
+                'name': 'content.txt',
+                'content': content.strip()
             }]
-
     elif input_type == "Multiple Files Input":
         st.sidebar.markdown("### Paste Multiple Files")
         st.sidebar.markdown(
@@ -219,101 +241,71 @@ def main():
             else:
                 st.sidebar.error("Invalid directory path.")
 
+
     project_type = st.sidebar.selectbox(
         "Select Project Type",
-        ["JavaScript", "Angular", "React", "Python", "Java", ".NET"],
-        key="project_type_main")
-    use_ai = st.sidebar.checkbox("Use AI-powered test generation",
-                                 value=True,
-                                 key="use_ai_checkbox")
+        ["JavaScript", "Angular", "React", "Python", "Java", ".NET"]
+    )
 
-    # Add checkboxes for toggling different sections
-    show_coverage_quality = st.sidebar.checkbox(
-        "Show Code Coverage and Test Quality",
-        value=False,
-        key="show_coverage_quality_checkbox")
-    show_functional_coverage = st.sidebar.checkbox(
-        "Show Functional Coverage",
-        value=False,
-        key="show_functional_coverage_checkbox")
-
-    analyze_button = st.sidebar.button("Analyze Project")
+    analyze_button = st.sidebar.button("Analyze Project", 
+                                     help="Click to start analysis")
 
     if file_contents and analyze_button:
-        with st.spinner("Analyzing project..."):
+        with st.spinner("🔄 Analyzing project..."):
             try:
-                # Process input
                 processed_files = process_upload(file_contents)
-
-                # Analyze code
                 code_analysis = analyze_code(processed_files, project_type)
-
-                # Analyze existing tests
                 test_analysis = analyze_tests(processed_files, project_type)
-
-                # Generate new tests
                 unit_tests, functional_tests = generate_tests(
                     code_analysis, test_analysis, project_type)
 
-                # Store generated tests in session state
                 st.session_state.unit_tests = unit_tests
                 st.session_state.functional_tests = functional_tests
 
-                # Display results
-                display_results(code_analysis, test_analysis, project_type,
-                                show_coverage_quality,
-                                show_functional_coverage)
+                st.markdown("""
+                    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Analysis Results</h2>
+                    </div>
+                """, unsafe_allow_html=True)
 
-                # Display generated tests
-                st.header("Generated Test Cases")
+                display_results(code_analysis, test_analysis, project_type, True, True)
+
+
+                st.markdown("""
+                    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Generated Test Cases</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+
                 if unit_tests:
-                    st.subheader("Unit Tests")
                     st.code(unit_tests)
-                else:
-                    st.warning("No unit tests were generated.")
+                    st.download_button(
+                        "📥 Download Unit Tests",
+                        unit_tests,
+                        f"generated_unit_tests.{get_file_extension(project_type)}"
+                    )
 
                 if functional_tests:
-                    st.subheader("Functional Tests")
                     st.code(functional_tests)
-                else:
-                    st.warning("No functional tests were generated.")
-
-                # Add download buttons for unit tests and functional tests
-                if st.session_state.unit_tests:
                     st.download_button(
-                        label="Download Unit Tests",
-                        data=st.session_state.unit_tests,
-                        file_name=
-                        f"generated_unit_tests.{get_file_extension(project_type)}",
-                        mime="text/plain",
-                        key="download_unit_tests_button")
-                if st.session_state.functional_tests:
-                    st.download_button(
-                        label="Download Functional Tests",
-                        data=st.session_state.functional_tests,
-                        file_name=
-                        f"generated_functional_tests.{get_file_extension(project_type)}",
-                        mime="text/plain",
-                        key="download_functional_tests_button")
-
-                # Display test quality suggestions
-                st.header("Suggestions for Improving Test Quality")
-                suggestions = get_test_quality_suggestions()
-                for i, suggestion in enumerate(suggestions, 1):
-                    st.write(f"{i}. {suggestion}")
+                        "📥 Download Functional Tests",
+                        functional_tests,
+                        f"generated_functional_tests.{get_file_extension(project_type)}"
+                    )
 
             except Exception as e:
-                st.error(f"An error occurred during the analysis: {str(e)}")
+                st.error(f"❌ An error occurred: {str(e)}")
     else:
-        st.info(
-            "Please enter a file path, paste file content, or provide a directory path and click 'Analyze Project' to begin analysis."
-        )
+        st.info("📝 Please provide input and click 'Analyze Project' to begin.")
 
-    st.sidebar.markdown("---")
-    st.sidebar.info(
-        "This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects for unit test coverage and quality, and generates new test cases."
-    )
-
+    st.sidebar.markdown("""
+        <div class="bg-blue-50 p-4 rounded-lg mt-8">
+            <p class="text-sm text-blue-800">
+                This app analyzes JavaScript, Angular, React, Python, Java, and .NET projects 
+                for unit test coverage and quality, and generates new test cases.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

@@ -56,21 +56,13 @@ def get_test_quality_suggestions():
 
 def display_results(code_analysis, test_analysis, project_type,
                     show_coverage_quality, show_functional_coverage):
-    st.markdown("""
-        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Analysis Results</h2>
-        </div>
-    """, unsafe_allow_html=True)
+    st.header("Analysis Results")
 
     if show_coverage_quality:
         if code_analysis and 'coverage' in code_analysis:
             coverage = code_analysis['coverage']
             if coverage['total_lines'] > 0:
-                st.markdown("""
-                    <div class="bg-blue-50 p-4 rounded-lg shadow mb-6">
-                        <h3 class="text-xl font-semibold text-blue-800 mb-2">Code Coverage</h3>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.subheader("Code Coverage")
                 try:
                     display_coverage(coverage)
                     st.write(f"Total Lines: {coverage['total_lines']}")
@@ -149,25 +141,15 @@ def main():
     if 'functional_tests' not in st.session_state:
         st.session_state.functional_tests = None
 
-    st.markdown("""
-        <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Comprehensive Unit Test Analyzer</h1>
-            <p class="text-sm text-gray-600 mb-6">Version: {}</p>
-        </div>
-    """.format(__version__), unsafe_allow_html=True)
+    st.title("Comprehensive Unit Test Analyzer")
+    st.caption(f"Version: {__version__}")
 
-    st.markdown("""
-        <div class="bg-gray-50 p-4 rounded-lg shadow">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Input Project Files</h2>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    input_type = st.sidebar.radio(
-        "Select input type",
-        ["File Path", "File Content", "Project Directory", "Multiple Files Input"],
-        key="input_type_radio",
-        help="Choose how you want to input your code"
-    )
+    st.sidebar.header("Input Project Files")
+    input_type = st.sidebar.radio("Select input type", [
+        "File Path", "File Content", "Project Directory",
+        "Multiple Files Input"
+    ],
+                                  key="input_type_radio")
 
     file_contents = []
 

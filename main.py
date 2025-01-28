@@ -133,31 +133,32 @@ def main():
     st.caption(f"Version: {__version__}")
 
     st.sidebar.header("Input Project Files")
-    input_type = st.sidebar.radio("Select input type", ["File Path", "File Content", "Directory"], key="input_type_radio")
+    input_type = st.sidebar.radio("Select input type", ["Project Directory", "Multiple Files Input"], key="input_type_radio")
 
     file_contents = []
 
-    if input_type == "File Path":
-        file_path = st.sidebar.text_input("Enter file path", key="file_path_input")
-        if file_path:
-            try:
-                with open(file_path, 'r') as file:
-                    file_contents = [{
-                        'name': os.path.basename(file_path),
-                        'content': file.read()
-                    }]
-            except FileNotFoundError:
-                st.sidebar.error(f"File not found: {file_path}")
-            except IOError:
-                st.sidebar.error(f"Error reading file: {file_path}")
-    elif input_type == "File Content":
-        content = st.sidebar.text_area("Paste file content here", key="file_content_input")
+    if input_type == "Multiple Files Input":
+        st.sidebar.markdown("### Paste Multiple Files")
+        st.sidebar.markdown("Format: ```\nFilename: example.js\n[Content here]\n---```")
+        content = st.sidebar.text_area("Paste files here", height=300, key="multi_file_content_input")
+        
         if content:
-            file_contents = [{
-                'name': 'pasted_content.txt',
-                'content': content
-            }]
-    else:  # Directory
+            files = content.split('---')
+            for file_block in files:
+                if not file_block.strip():
+                    continue
+                try:
+                    file_lines = file_block.strip().split('\n')
+                    if file_lines[0].startswith('Filename:'):
+                        filename = file_lines[0].replace('Filename:', '').strip()
+                        file_content = '\n'.join(file_lines[1:])
+                        file_contents.append({
+                            'name': filename,
+                            'content': file_content
+                        })
+                except Exception as e:
+                    st.sidebar.error(f"Error parsing file block: {str(e)}")
+    else:  # Project Directory
         directory_path = st.sidebar.text_input("Enter directory path", key="directory_path_input")
         if directory_path:
             if os.path.isdir(directory_path):

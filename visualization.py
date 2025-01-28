@@ -7,6 +7,20 @@ def display_coverage(coverage: Dict):
     """
     Display code coverage information using a gauge chart.
     """
+    def get_color_for_value(value):
+        if value <= 30:
+            return "#FF4136"  # Critical - Red
+        elif value <= 50:
+            return "#FF851B"  # Warning - Orange
+        elif value <= 70:
+            return "#FFDC00"  # Caution - Yellow
+        elif value <= 85:
+            return "#2ECC40"  # Good - Light Green
+        else:
+            return "#01FF70"  # Excellent - Bright Green
+
+    value_color = get_color_for_value(coverage['coverage_percentage'])
+
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
@@ -15,6 +29,7 @@ def display_coverage(coverage: Dict):
                 'x': [0, 1],
                 'y': [0, 1]
             },
+            number={'font': {'color': value_color}},
             title={'text': "Code Coverage"},
             gauge={
                 'axis': {
@@ -22,7 +37,7 @@ def display_coverage(coverage: Dict):
                     'tickwidth': 1,
                     'tickcolor': "darkblue"
                 },
-                'bar': {'color': "royalblue"},
+                'bar': {'color': value_color},
                 'steps': [
                     {'range': [0, 30], 'color': "#FF4136"},  # Critical - Red
                     {'range': [30, 50], 'color': "#FF851B"},  # Warning - Orange
